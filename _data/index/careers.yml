@@ -28,7 +28,7 @@
     i18n: company_d_job
   icon: fa-plus-square
 
-  - name:
+- name:
     detail: Dell EMC
     i18n: company_c
   desc:
@@ -42,7 +42,7 @@
     i18n: company_c_job
   icon: fa-plus-square
 
-  - name:
+- name:
     detail: Cigital
     i18n: company_b
   desc:
@@ -56,7 +56,7 @@
     i18n: company_b_job
   icon: fa-plus-square
 
-  - name:
+- name:
     detail: Axway
     i18n: company_a
   desc:
