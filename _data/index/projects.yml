@@ -12,19 +12,19 @@
   i18n: tko-subs
   gh_user: anshumanbh
   repo: tko-subs
-  img: /static/assets/img/landing/google.png
+  img: /static/assets/img/landing/github.png
   desc: Handy tool to detect subdomain takeovers
 
 - name: git-all-secrets
   i18n: git-all-secrets
   gh_user: anshumanbh
   repo: git-all-secrets
-  img: /static/assets/img/landing/google.png
+  img: /static/assets/img/landing/github.png
   desc: Wrapper around other git searching tools with more features
 
 - name: brutesubs
   i18n: brutesubs
   gh_user: anshumanbh
   repo: brutesubs
-  img: /static/assets/img/landing/google.png
+  img: /static/assets/img/landing/github.png
   desc: Running multiple subdomain bruteforcing tools using Docker Compose
