@@ -41,7 +41,3 @@ author:
 <p>Once, we have those files, navigate to <strong>/Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/security. </strong>You will notice that there are already these 2 files present in that directory. But, these are the old ones that we need to replace with the new ones that we just downloaded. So, to be safe, create backup of the old "US_export_policy.jar" and "local_policy.jar" files. And, replace them with the new ones.</p>
 <p>Voila! you should be done at this point. Fire up burp again and navigate to the website that was causing problems. You should be able to access it without any problems. You just replaced the older jar files with the newer ones with much stronger keys that would help in the SSL negotiation.</p>
 <p><strong>PS</strong> - Finding the damn folder to replace the jar files was the hardest part. There were tons of folders, at least in my case, where these jar files were located. But, replacing them didn't help. I had to find the right path and eventually, the docs.oracle.com link pasted above came to the rescue. There were a lot of threads about changing Java versions, running different Burp versions, etc. but none of them were helpful.</p>
-<p>&nbsp;</p>
-<h1></h1>
-<pre></pre>
-<p>&nbsp;</p>
