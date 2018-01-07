@@ -5,11 +5,17 @@
 - name: Security
   href: /security/
 
-- name: Database
-  href: /database/
+- name: Automation
+  href: /automation/
 
 - name: Devops
   href: /devops/
+
+- name: Bugbounty
+  href: /bugbounty/
+
+- name: Database
+  href: /database/
 
 - name: Configuration
   href: /configuration/
@@ -19,9 +25,6 @@
 
 - name: Monitoring
   href: /monitoring/
-
-- name: Bugbounty
-  href: /bugbounty/
 
 - name: Personal
   href: /personal/
