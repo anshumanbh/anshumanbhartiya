@@ -1,0 +1,95 @@
+---
+layout: post
+title: Security Issues in Square - (1/2)
+date: 2014-07-22 20:02:31.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- AppSec
+- bug bounty
+- bugbounty
+- Security
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  geo_public: '0'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+  _wpas_skip_1005091: '1'
+  _wpas_skip_1005089: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p><strong>Forceful Browsing</strong></p>
+<p>The Squareup website has a feature where users can add mobile staff on their team to collect payments on their behalf, issue refunds, etc. Let’s refer to this user as an admin and his mobile staff members as staff.</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-09-at-11-29-35-pm.png"><img class="aligncenter size-full wp-image-183" src="{{ site.baseurl }}/assets/screen-shot-2014-07-09-at-11-29-35-pm.png" alt="Screen Shot 2014-07-09 at 11.29.35 PM" width="497" height="338" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>The way this works is that an admin sends an invitation to the people he wishes to add as mobile staff as shown in the above pic. It does not matter if the invited staff already has an existing account on Squareup. As soon as the invitation is sent, the invited staff receives a link in an email. When that link is clicked, the staff is asked to create a new account to accept payments as shown in the pic below:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-09-at-11-41-24-pm.png"><img class="aligncenter size-full wp-image-184" src="{{ site.baseurl }}/assets/screen-shot-2014-07-09-at-11-41-24-pm.png" alt="Screen Shot 2014-07-09 at 11.41.24 PM" width="497" height="338" /></a></p>
+<p>&nbsp;</p>
+<p>If that staff already has an account on Squareup, unfortunately he would have to use a different email address, as he will get an error message “Email has already been taken” if he tries to use his existing email. It sounds weird but this is how it has been designed to work. A user cannot use the same email address to be a legitimate Squareup user as well as a mobile staff on somebody else’s team simultaneously.</p>
+<p>So, the staff now uses a different email address to create an account so that he can accept payments on behalf of the admin. After the account is created, the staff sees the screen below:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-09-at-11-49-14-pm.png"><img class="aligncenter size-full wp-image-185" src="{{ site.baseurl }}/assets/screen-shot-2014-07-09-at-11-49-14-pm.png" alt="Screen Shot 2014-07-09 at 11.49.14 PM" width="497" height="347" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>Notice how all the different tabs (Home, Sales, Items, Orders, etc.) in the top row don’t appear anymore. So, basically the staff is only supposed to accept payments and do nothing else.</p>
+<p>Well guess what – that’s not true. With forceful browsing, this staff can easily navigate to any page in the dashboard he wants to. There is no check being performed at all. So, the staff has as much access to his “own” dashboard as any other Square user might have access to theirs. This means that one of the many actions that a staff can do is send invoices to the admin’s customers, which he is not technically supposed to do. There is a blessing in disguise here though. When the staff sends this invoice, the invoice appears to be sent from the staff and not the admin. So, the staff cannot impersonate the admin and send the invoice on the admin’s behalf.</p>
+<p>But if you think about it in a real world scenario, if I as an admin have assigned a person A to be my staff member, I would certainly inform all my customers of this new addition to my team and my customers would trust A henceforth. I would not go beyond that and inform them that “Do not pay invoices that are not sent by me”. This means if my customers see an invoice coming from my staff member, they would not hesitate in paying that. I feel this is a very viable situation where a rogue staff with a little bit of social engineering can literally go berserk without the admin even knowing about it.</p>
+<p>Square qualified this as an “UI aesthetic bug” and not really a security issue. They went ahead and fixed it too as it is not reproducible anymore. They said this has no security implications whatsoever. If you ask me, I’d say forceful browsing is a known security issue regardless of the impact. By design, if a staff is not supposed to see their dashboard yet they can, I’d like to call it a security issue. Whatever happened to least privilege access? Not to mention, the sending invoice feature discussed above is just one thing out of the many things that a staff could possibly do as a result of this. I don’t think any of those actions are intended to be performed by a mobile staff member.</p>
+<p>Moving further, if the admin removes this staff from his team, the staff member can now see his entire dashboard, which is fine. But, this behavior would just confirm my suspicion that it was not intended for the staff to access anything in his dashboard in the first place as long as he was a mobile staff member. Why would you ask existing users to create a new account otherwise? Why not just allow existing users to have full access to their dashboard as well as act as mobile staff for other teams?</p>
+<p>--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
+<p>&nbsp;</p>
+<p><strong>Sending Invoice Bypass</strong></p>
+<p>As soon as a user creates an account on the Square website, he is taken to the page https://squareup.com/begin#step/0/us_business_information which looks like below:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-10-at-8-57-36-pm.png"><img class="aligncenter size-full wp-image-178" src="{{ site.baseurl }}/assets/screen-shot-2014-07-10-at-8-57-36-pm.png" alt="Screen Shot 2014-07-10 at 8.57.36 PM" width="497" height="328" /></a></p>
+<p>&nbsp;</p>
+<p>This is the first step for getting a new user’s account activated. But, this step along with the next few steps can be ignored/bypassed by directly navigating to the dashboard at the URL - https://squareup.com/dashboard that looks like below:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-10-at-8-59-12-pm.png"><img class="aligncenter size-full wp-image-179" src="{{ site.baseurl }}/assets/screen-shot-2014-07-10-at-8-59-12-pm.png" alt="Screen Shot 2014-07-10 at 8.59.12 PM" width="497" height="204" /></a></p>
+<p>&nbsp;</p>
+<p>If you then navigate to Sales -&gt; Invoices -&gt; Create Invoice, you see the following screen:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-10-at-9-00-45-pm.png"><img class="aligncenter size-full wp-image-180" src="{{ site.baseurl }}/assets/screen-shot-2014-07-10-at-9-00-45-pm.png" alt="Screen Shot 2014-07-10 at 9.00.45 PM" width="497" height="260" /></a></p>
+<p>&nbsp;</p>
+<p>Now, it is quite obvious from the UI that Square wants you to activate your account first before doing operations like sending invoices, creating your business public profile, etc. Isn’t it? At least from the client perspective it is.</p>
+<p>Using a proxy tool such as Burp, send the request that looks like below. Replace the redacted values accordingly – Use the X-CSRF-Token, _sessionv2 values of the newly created user. Use any invoice number that looks sequential like 000006, and the payer_email as the email address of the person who you wish to send the invoice to:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-22-at-10-47-34-pm.png"><img class="aligncenter size-full wp-image-182" src="{{ site.baseurl }}/assets/screen-shot-2014-07-22-at-10-47-34-pm.png" alt="Screen Shot 2014-07-22 at 10.47.34 PM" width="497" height="455" /></a></p>
+<p>&nbsp;</p>
+<p>You will notice that you will get a successful response.</p>
+<p>So, what happened? <strong><em>This newly created user just sent an invoice to a person for an item that is not even owned/created by this user. The above item is actually created by a totally different user. </em></strong>The email received looks like below:</p>
+<p>&nbsp;</p>
+<p><a href="https://abhartiya.files.wordpress.com/2014/07/screen-shot-2014-07-10-at-9-17-28-pm.png"><img class="aligncenter size-full wp-image-181" src="{{ site.baseurl }}/assets/screen-shot-2014-07-10-at-9-17-28-pm.png" alt="Screen Shot 2014-07-10 at 9.17.28 PM" width="497" height="621" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>So, essentially there are no server side authorization checks being performed on:</p>
+<ul>
+<li>Checking whether a user is actually supposed to be sending invoices or not without activating his account, adding his bank details, etc.</li>
+<li>Sending invoices for items that are not owned by the user.</li>
+</ul>
+<p>Not to mention, if this issue is coupled with the first issue of Forceful Browsing, it is quite evident how one issue can lead to a chaining attack and make other attacks feasible.</p>
+<p><em><strong>This bug has been fixed so it cannot be reproduced anymore. I responsibly disclosed this to Square and they fixed it.</strong></em></p>
+<p>--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
+<p>&nbsp;</p>
+<p><strong>Password Reset Token</strong></p>
+<p>In the Square Cash application (https://cash.square.com/cash/login), on requesting multiple password-reset links, the old links are still valid. Now, I believe it is acceptable to have old links valid if the latest links have not been used because it is confusing and a hassle for end users to know which one is the latest if they haven’t reset the password yet but requested for multiple links.</p>
+<p>But, one would imagine that if the new links have been used, at the very least, all the old links get invalidated, correct? That’s not the case here. The old links continue to be valid and if an attacker gains access to them, he would be able to reset the victim’s password. Not to mention, these tokens are all present in a GET request (https://square.com/cash/login/set-password/&lt;token&gt;), which means they often, get logged in browser’s history, proxies, logs, etc.</p>
+<p>The only positive thing about this flow is that the tokens get invalidated after 12 hours. But, if I were a determined attacker, 12 hours is a lot of time I’d say. I’d also like to mention here that the same behavior is not observed on their flagship Squareup website - https://squareup.com/password/reset/&lt;token&gt;. The password reset functionality on that website is working properly. Old tokens get invalidated once new tokens are generated. So, if they have it there, why not here? I don't know.</p>
+<p>&nbsp;</p>
+<p>PS - I reported one more issue that was pretty interesting. I am waiting for Square to fix it before I blog about it.</p>

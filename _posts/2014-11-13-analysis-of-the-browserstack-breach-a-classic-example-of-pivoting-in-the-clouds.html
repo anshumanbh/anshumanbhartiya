@@ -1,0 +1,82 @@
+---
+layout: post
+title: Analysis of the BrowserStack breach - A classic example of "Pivoting in the
+  Clouds"
+date: 2014-11-13 13:17:24.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+- Database
+- Monitoring
+tags:
+- AWS
+- Cloud Computing
+- Cloud Security
+- Security
+meta:
+  _edit_last: '28002546'
+  geo_public: '0'
+  _publicize_pending: '1'
+  _oembed_c9db10f53a1e162177e2da7f7d28ae66: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<section class="jive-content-body">
+<div class="jive-blog-post-message">
+<div class="jive-rendered-content">
+<p>BrowserStack was recently breached and it was all over the news as is the case with almost all breaches these days.</p>
+<p>In this blog post, I will briefly describe what happened to make everybody aware that things can go really wrong in the Cloud if proper measures are not taken.</p>
+<p>&nbsp;</p>
+<p><strong>The Tl;DR version:</strong></p>
+<p>BrowserStack's infrastructure is hosted on the Amazon Web Services (AWS).</p>
+<p>They had one particular machine (virtual instance in this case) on the AWS that was not patched against the ShellShock vulnerability.</p>
+<p>The attacker leveraged that to pivot through the various moving parts within their AWS setup and steal <em><strong>some</strong></em> information from their production database.</p>
+<p>The attacker then used the stolen data and credentials of their AWS SES (See below) service to send emails to some BrowserStack users stating that BrowserStack is shutting down. Ouch!!</p>
+<p>&nbsp;</p>
+<p><strong>The longer version:</strong></p>
+<p>Attackers took advantage of the un-patched instance -&gt; logged in that instance -&gt; created an IAM user (See below) and generated a key-pair by using the secret keys stored on that instance -&gt; spawned a new instance using the newly created credentials -&gt; mounted one of the production backup disks to this instance -&gt; retrieved config file with database password from this backup -&gt; copied database tables partially and stole some data. While the database tables were being copied, it triggered an alert and the BrowserStack folks acted immediately blocking the IP.</p>
+<p>&nbsp;</p>
+<p>But, by this time, the attacker already had stolen some data and the SES (See below) credentials which helped them send a fake email to some BrowserStack users.</p>
+<p>&nbsp;</p>
+<p><strong>IAM</strong></p>
+<p>This is the AWS Identity Access Management solution where you can create multiple users in an organization and assign the appropriate access rights to them following the minimum privilege access model. In other words, just give the amount of access to an individual that the individual's role demands. Nothing more than that.</p>
+<p>&nbsp;</p>
+<p><strong>SES</strong></p>
+<p>This is the AWS Simple Email Service which is a service for sending out emails.</p>
+<p>&nbsp;</p>
+<p><strong>Below is purely my analysis on this incident. Please feel free to comment/ask questions/criticize:</strong></p>
+<p>&nbsp;</p>
+<p><strong>Some of the poor practices done by BrowserStack on the AWS Cloud:</strong></p>
+<p>1. AWS Secret keys were stored on the un-patched instance. Secret keys should be stored securely following the AWS Best Practices.</p>
+<p>2. I don't think they had an inventory of all their running AWS instances. Maybe, they did because it could be obtained from their AWS Console. But, I cannot be sure. Assuming they knew about this running instance, they should have really patched it against ShellShock. <strong><em>This was the root cause and could have prevented the breach all together even if other protections didn't exist.</em></strong></p>
+<p>3. They did have some alerts but they should have really built a lot more alerts like while creating a new IAM user, creating key pairs, etc.</p>
+<p>4. Allowing IAM users to be created with elevated privileges. This is an educated guess. If they allowed the newly created IAM user to start a new instance, mount a backup to it, etc., I am guessing this IAM user had elevated privileges. Was this really necessary?</p>
+<p>5. 2-factor authentication. AWS provides the capability to implement 2-factor authentication which I don't think was being leveraged here.</p>
+<p>6. Storage of sensitive information. The database password was stored in a config file that was readable. This could have been locked down better. Was the backup disk the only place where they stored the database password?</p>
+<p>7. There is no mention of how the attacker obtained the SES credentials. I am guessing that was stored on the backup disk as well.</p>
+<p>&nbsp;</p>
+<p><strong>Having talked about the poor practices, there were some good things that BrowserStack did as well:</strong></p>
+<p>1. Passwords hashed using bcrypt. This is a biggie!! Never store passwords in cleartext.</p>
+<p>2. Alerts triggered at some point. Due to the alert that got triggered while copying database tables, the magnitude of impact was reduced drastically so that's good.</p>
+<p>3. They mention auditing by AWS Cloud Trail that helped them track the attacker's movements.</p>
+<p>4. Credit Card data processed through 3rd party so the credit card details were not stored on their instances. Again, this is a biggie when it comes to dealing with Credit Card data on the cloud. Leveraging a 3rd party to do this often helps as evident from this case.</p>
+<p>5. Locking database when copied. A good fail-over mechanism which helped them in this case to some extent.</p>
+<p>6. Other instances were patched against ShellShock so the attack surface was reduced.</p>
+<p>7. Instances protected by OS firewall in addition to network firewalls. Defense in depth</p>
+<p>8. They mention implementing "security groups" which is a AWS good practice. This helps segregate and isolate different moving parts.</p>
+<p>9. Most importantly, they were pretty quick in responding to this breach. So, that was a big plus!</p>
+<p>10. They did some more improvements as mentioned in the link below like encrypting backups, auditing logs more, revoking all existing AWS keys, improving monitoring and requesting a 3rd party to conduct a security audit. All these things are definitely going to improve their security posture.</p>
+<p>&nbsp;</p>
+<p>Reference URL:</p>
+<p><a class="jive-link-external-small" href="http://www.nextbigwhat.com/browserstack-hack-attack-explanation-297/" rel="nofollow">http://www.nextbigwhat.com/browserstack-hack-attack-explanation-297/</a></p>
+</div>
+</div>
+</section>

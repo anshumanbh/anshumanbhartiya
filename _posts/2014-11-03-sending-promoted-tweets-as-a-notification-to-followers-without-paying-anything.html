@@ -1,0 +1,117 @@
+---
+layout: post
+title: Sending "promoted" tweets as a notification to followers without paying anything
+date: 2014-11-03 12:18:42.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Security
+tags:
+- AppSec
+- bug bounty
+- bugbounty
+- twitter
+meta:
+  _wpas_skip_google_plus: '1'
+  _wpas_skip_twitter: '1'
+  _wpas_skip_tumblr: '1'
+  _wpas_skip_path: '1'
+  _wpas_skip_facebook: '1'
+  _wpas_skip_linkedin: '1'
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  enclosure: |
+    https://www.dropbox.com/s/ftcle365fx6cbs8/Video%20Oct%2013%2C%209%2004%2003%20PM.mov?dl=0
+    0
+    video/quicktime
+  geo_public: '0'
+  _oembed_70b803640c1da3831f28cd8f286600f2: "{{unknown}}"
+  _oembed_f050872244b87e9a2d18190afb5689f6: "{{unknown}}"
+  _oembed_d902bf29184c31664008b6af85cd4d23: "{{unknown}}"
+  _oembed_3f4a4ad8d4bbdc565e8bc86f9da1ae44: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Edit: After I wrote this post, I found out this link - http://www.cnet.com/news/twitter-bug-makes-users-fear-invasion-of-push-notification-ads/</p>
+<p>In that link, you will notice that Dick Costolo (CEO of Twitter) claims that "We don't send ads via push notification. Will look into it." This is dated way back in Sep'13.</p>
+<p>So, after a year, they are still doing that, aren't they?</p>
+<p>I also wanted to clarify that even though this is only aimed towards followers (I haven't tested against people who are not followers), it is still an ad/promotion being actively sent out as a push notification. That doesn't happen for normal tweets. Followers don't get notified actively when somebody tweets. Same thing with promoted tweets. It just shows up on the follower's timeline. But, this is not the case here. The promoted tweet that I mention below doesn't appear as a regular tweet on the timeline.</p>
+<p>---------------</p>
+<p>I recently discovered an interesting quirk on Twitter. Sadly, it is a Won't Fix. I have requested public disclosure so it probably will go live soon. The HackerOne report number is #31073. But, below is what was reported in the meantime:</p>
+<p>It was observed that I could promote ads on twitter without paying anything for them.</p>
+<p>Steps to Reproduce:</p>
+<ul>
+<li>Sign up for a twitter account and enable Ads &amp; Analytics on your profile. For the sake of PoC, this is abtest66.</li>
+<li>Create a campaign. The one that I did was "Website clicks or conversions" "Targeting interests and users". I chose all locations and for targeting, I chose the following:
+<ul>
+<li>Added two of my own accounts (abtest67, anshuman_bh)</li>
+<li>Targeted all my followers</li>
+<li>Targeted users like my followers</li>
+</ul>
+</li>
+<li>Don't select any promoted tweets as of now. Go ahead and launch the campaign. You will be taken to the payments page. Ignore that and navigate to the Campaign Dashboard. Notice that the Campaign shows as running.</li>
+<li>Now, edit this campaign and under the Creative section, add a few promoted tweets. I added 6. Notice that inspite of not having any payment setup, the user is allowed to add promoted tweets. I think this is the main problem here.</li>
+</ul>
+<p>The result was that in my account anshuman_bh (one of my targets of the above campaign), I got a notification of this promoted tweet. See Screenshots 1 (notification of the promoted tweet) and 2 (the actual promoted tweet when clicked on the notification).</p>
+<p><img class="alignnone size-medium wp-image-193" src="{{ site.baseurl }}/assets/1.jpg?w=225" alt="1" width="225" height="300" /></p>
+<p>Screenshot 1</p>
+<p><img class="alignnone size-medium wp-image-195" src="{{ site.baseurl }}/assets/2.jpg?w=225" alt="2" width="225" height="300" /></p>
+<p>Screenshot 2</p>
+<p>Also, under abtest66's Analytics Dashboard -&gt; Promoted section, I did see some data. See Screenshots 3 and 4. I believe this shouldn't have happened either.</p>
+<p><img class="alignnone size-medium wp-image-196" src="{{ site.baseurl }}/assets/3.png?w=300" alt="3" width="300" height="165" /></p>
+<p>Screenshot 3</p>
+<p><img class="alignnone size-medium wp-image-194" src="{{ site.baseurl }}/assets/4.png?w=300" alt="4" width="300" height="177" /></p>
+<p>Screenshot 4</p>
+<p>Hope this helps!</p>
+<p>Twitter folks were not able to reproduce following the steps above so I had to send a better Steps to Reproduce along with a video so here it goes:</p>
+<p>I have tried reproducing it again and it works. Here are the steps.</p>
+<ul>
+<li>Create a test account - <a href="https://hackerone.com/a1">@A1</a></li>
+<li>Follow <a href="https://hackerone.com/a1">@A1</a> from another account <a href="https://hackerone.com/a2">@A2</a></li>
+<li>Now, enable Ads and Analytics for <a href="https://hackerone.com/a1">@A1</a></li>
+<li>For <a href="https://hackerone.com/a1">@A1</a>, create a new campaign -&gt; Promoted Tweets<br />
+The URL will look like<code class="ruby"><span class="symbol"><span class="symbol">https:</span></span>/<span class="regexp"><span class="regexp">/ads.twitter.com/accounts</span></span><span class="regexp"><span class="regexp">/&lt;redacted&gt;/campaigns</span></span><span class="regexp"><span class="regexp">/new_promoted_tweets?source=objective_picker</span></span></code></li>
+<li>Enter the Campaign Name, choose Start immediately, target interests and followers.</li>
+<li>Add <a href="https://hackerone.com/a2">@A2</a> as a target. Also check the box "Also target your followers".</li>
+<li>Choose Show ads in all available locations</li>
+<li>Add a promoted tweet.</li>
+<li>Set daily max 4.00 and max bid per engagement as 2.00</li>
+<li>Click on save campaign -&gt; Launch Campaign</li>
+<li>Notice that <a href="https://hackerone.com/a1">@A1</a> is redirected to a payments page. Ignore the payments page</li>
+<li>Navigate to <a title="https://ads.twitter.com/accounts/" href="https://hackerone.com/redirect?signature=3ae93678abc6d7d4d1f02bbb451e3f2aed555e53&amp;url=https%3A%2F%2Fads.twitter.com%2Faccounts%2F" target="_blank">https://ads.twitter.com/accounts/</a>. Notice the campaign shows running but <strong><em>technically</em></strong>its not.</li>
+<li>Now, go back to <a href="https://hackerone.com/a1">@A1</a>'s twitter homepage and tweet something.</li>
+<li>Notice <a href="https://hackerone.com/a2">@A2</a> gets a notification (on his mobile phone for example) saying <strong><em>@A1 just tweeted for the first time. Welcome <a href="https://hackerone.com/a1">@A1</a> to Twitter!</em></strong><br />
+When clicked on that notification, it takes <a href="https://hackerone.com/a2">@A2</a> to the first tweet from <a href="https://hackerone.com/a1">@A1</a> - <strong><em>This is as expected. This tweet is also visible on <a href="https://hackerone.com/a1">@A1</a>'s timeline since it is an actual tweet.</em></strong></li>
+<li>Now, go back to the Campaign created by <a href="https://hackerone.com/a1">@A1</a> and click Edit.</li>
+<li>Under tweets, add one more promoted tweet lets say <strong><em>test1</em></strong></li>
+<li>Notice <a href="https://hackerone.com/a2">@A2</a> gets the same notification again saying <strong><em>@A1 just tweeted for the first time. Welcome<a href="https://hackerone.com/a1">@A1</a> to Twitter!</em></strong>When clicked on that notification, it now takes <a href="https://hackerone.com/a2">@A2</a> to the promoted tweet from <a href="https://hackerone.com/a1">@A1</a> <strong><em>test1</em></strong> - <strong><em>This is not as expected. This tweet does not appear on <a href="https://hackerone.com/a1">@A1</a>'s timeline either. It is a promoted tweet which shouldn't have been promoted.</em></strong>Basically, <a href="https://hackerone.com/a1">@A1</a> just promoted a tweet to one of his followers <a href="https://hackerone.com/a2">@A2</a> <strong><em>without running a campaign or paying anything.</em></strong>
+<p>Btw, this activity is captured in the Dashboard so you get all those numbers as well.</li>
+</ul>
+<p>Video link - <a title="https://www.dropbox.com/s/ftcle365fx6cbs8/Video%20Oct%2013%2C%209%2004%2003%20PM.mov?dl=0" href="https://hackerone.com/redirect?signature=7a7e5dc5da7a025c0e89f640bd4eafd335bed91d&amp;url=https%3A%2F%2Fwww.dropbox.com%2Fs%2Fftcle365fx6cbs8%2FVideo%2520Oct%252013%2C%25209%252004%252003%2520PM.mov%3Fdl%3D0" target="_blank">https://www.dropbox.com/s/ftcle365fx6cbs8/Video%20Oct%2013%2C%209%2004%2003%20PM.mov?dl=0</a></p>
+<p>&nbsp;</p>
+<p>This was finally triaged and I got an initial reply stating:</p>
+<p>"Thank you for your report. We believe it may be a valid security issue and will investigate it further. It could take some time to find and update the root cause for an issue, so we thank you for your patience.</p>
+<p>Thank you for helping keep Twitter secure!"</p>
+<p>&nbsp;</p>
+<p>But, a few days later, they replied back saying:</p>
+<p>"Hello again. After consulting with the security team and the relevant engineering team, we decided since it only affects notifications of first tweet, the impact is so low that we aren't going to fix it. Thanks again for looking at Twitter security."</p>
+<p>&nbsp;</p>
+<p>And, then another clarification saying:</p>
+<p>"Hi, please let me clarify. I should say that it only happens when it shows up via a notification (such as first tweet notification). You should only be able to get notifications sent to people who follow you. So in this case you're "promoting" tweets to people who follow you, in which case you could just have tweeted. Anyway, please let me know if I'm missing something."</p>
+<p>&nbsp;</p>
+<p>To this, my final replies were:</p>
+<p>"The first tweet notification should technically be sent to my followers only when I tweet for the first time. It does not get sent anytime after that. If I can leverage this behavior to send promoted tweets to all my followers as and when I wish, then I'd say I am abusing the platform and doing something that I am not technically supposed to do.</p>
+<p>Not to mention, I get all the numbers in the Analytics Dashboard as well under Promoted tweets like who clicked, who retweeted, etc. I am getting all the impressions without paying anything. Isn't this foiling the whole purpose for promoted tweets?</p>
+<p>Yes, you could have just tweeted but when you tweet, your followers are not actively notified. It just appears in their timeline. In this case, the followers are being actively notified about it in the form of a notification. It is more like a promotion than just regular tweeting."</p>
+<p>&nbsp;</p>
+<p>"In the end, I'd say this really boils down to the business decision and risk acceptance. If you guys are okay with this behavior, I don't have any problems. In that case, do you mind changing the status to "Won't Fix"? Thanks!"</p>
+<p>&nbsp;</p>
+<p>Cheers!</p>
+<p>Anshuman</p>

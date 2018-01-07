@@ -1,0 +1,168 @@
+---
+layout: post
+title: Automating ZAP running against a web application in Docker Containers
+date: 2015-07-09 02:19:59.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- DevOps
+- Security
+tags:
+- AppSec
+- Cloud Computing
+- Docker
+- ZAP
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '12555895702'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>To start of, this has been a lot of fun learning experience for me. It had been a while since I did any sort of Bash/Python scripting so it definitely got me back on track. Also, there are some resources out there but nothing helped me as such for the particular case I was looking to solve. Lastly, I will try to convert this into a series of blog posts where I will try to get much deeper with ZAP scanning and reports, integration with CI build servers, etc. as and when time permits. And, btw, you would need to know the basics of working with Docker in order to understand this blog. Having said that, I will try to explain most of the commands I have in my scripts. So, lets begin.</p>
+<p><strong>TL;DR of this post:</strong></p>
+<p>1. You install Docker.</p>
+<p>2. You run a custom bash script.</p>
+<p>3. This bash script starts 2 Docker containers from 2 different images:</p>
+<ul>
+<li>One is a sample web application. The name of the image from where this container is built is "training/webapp". This can be found on Docker Hub.</li>
+<li>The other container is built from a custom image which in turn is built on top of "owasp/zap2docker-stable" image found on Docker Hub.</li>
+</ul>
+<p>4. Once, both the containers are started, ZAP runs against the web app. It does a very basic spidering and scanning. Once everything is done, the report is stored on the ZAP container.</p>
+<p>5. The report is then transferred onto the host and all the containers are deleted.</p>
+<p>So, basically, you ran ZAP against a web app and generated a XML report on your file system - all automated by just one script!</p>
+<p>The main bash script (zaprun.sh) mentioned in point 2 above is as follows. I have left comments above each command so it should be self-explanatory. Try to understand this script and save it for now. We will run this later on:</p>
+<blockquote>
+<p class="p1"><span class="s1">#!/bin/bash</span></p>
+<p class="p1"><span class="s1">set -e</span></p>
+<p class="p1">#Running the sample webapp and storing the ID in a variable</p>
+<p class="p1"><span class="s1">WEBCONTAINERID=$(docker run -d -P --name web training/webapp python app.py)</span></p>
+<p class="p1"><span class="s1">echo Container ID = $WEBCONTAINERID</span></p>
+<p class="p1">#Inspecting the above container to gather its IP address and port that will be accessible to the ZAP container to run the scan against</p>
+<p class="p1"><span class="s1">WEBDOCKERIP=$(docker inspect $WEBCONTAINERID | grep -w IPAddress | sed 's/.*IPAddress": "//' | sed 's/",$//')</span></p>
+<p class="p1"><span class="s1">echo Webapp Docker IP = $WEBDOCKERIP</span></p>
+<p class="p1"><span class="s1">WEBDOCKERPORT=$(docker port $WEBCONTAINERID | sed 's/\/tcp.*//')</span></p>
+<p class="p1"><span class="s1">echo Webapp Docker Port = $WEBDOCKERPORT</span></p>
+<p class="p1">#Running the ZAP container. Notice that this container is named test and there is a custom python script runzap.py that is run. I will provide these later on. This is what I built on top of owasp/zap2docker-stable image</p>
+<p class="p1"><span class="s1">ZAPCONTAINERID=$(docker run -d --name zap test python /zap/ZAP_2.4.0/runzap.py http://$WEBDOCKERIP:$WEBDOCKERPORT)</span></p>
+<p class="p1"><span class="s1">echo ZAP Container ID = $ZAPCONTAINERID</span></p>
+<p class="p1">#Inspecting the above container to see whether it is running or not. If it is not running, that means ZAP has finished the scan and the report is generated.</p>
+<p class="p1"><span class="s1">STATUS=$(docker inspect $ZAPCONTAINERID | grep Running | sed 's/"Running"://' | sed 's/,//')</span></p>
+<p class="p1"><span class="s1">flag="1"</span></p>
+<p class="p1"><span class="s1">while [ "$flag" = "1" ]; do</span></p>
+<p class="p1"><span class="s1">if [ $STATUS == "true" ];</span></p>
+<p class="p1"><span class="s1"> then<span class="Apple-converted-space">  </span></span></p>
+<p class="p1"><span class="s1"> sleep 5</span></p>
+<p class="p1"><span class="s1"> echo ZAP is running..</span></p>
+<p class="p1"><span class="s1"> flag=1</span></p>
+<p class="p1"><span class="s1"> STATUS=$(docker inspect $ZAPCONTAINERID | grep Running | sed 's/"Running"://' | sed 's/,//') </span></p>
+<p class="p1"><span class="s1"> else</span></p>
+<p class="p1"><span class="s1"> sleep 5</span></p>
+<p class="p1"><span class="s1"> echo ZAP has stopped</span></p>
+<p class="p1"><span class="s1"> flag=0</span></p>
+<p class="p1"><span class="s1"> STATUS=$(docker inspect $ZAPCONTAINERID | grep Running | sed 's/"Running"://' | sed 's/,//')</span></p>
+<p class="p1"><span class="s1">fi</span></p>
+<p class="p1"><span class="s1">done</span></p>
+<p class="p1">#Copying the report to Host OS</p>
+<p class="p1"><span class="s1">echo Copying the report to host in the current directory with the name report.xml </span></p>
+<p class="p1"><span class="s1">docker cp $ZAPCONTAINERID:/zap/ZAP_2.4.0/report.xml .</span></p>
+<p class="p1">#Deleting all the containers that were created as a result of this script</p>
+<p class="p1"><span class="s1">echo Deleting the ZAP Container</span></p>
+<p class="p1"><span class="s1">docker rm $ZAPCONTAINERID</span></p>
+<p class="p1"><span class="s1">if [ $? -eq 0 ]</span></p>
+<p class="p1"><span class="s1">then </span></p>
+<p class="p1"><span class="s1"> echo Stopping the Webapp Container</span></p>
+<p class="p1"><span class="s1"> docker stop $WEBCONTAINERID</span></p>
+<p class="p1"><span class="s1">fi</span></p>
+<p class="p1"><span class="s1">if [ $? -eq 0 ]</span></p>
+<p class="p1"><span class="s1">then </span></p>
+<p class="p1"><span class="s1"> echo Deleting the Webapp Container</span></p>
+<p class="p1"><span class="s1"> docker rm $WEBCONTAINERID</span></p>
+<p class="p1"><span class="s1">fi</span></p>
+</blockquote>
+<p>Now, on your host OS, create a folder and paste the following 2 files in that folder:</p>
+<ol>
+<li>Dockerfile (self-explanatory)</li>
+</ol>
+<blockquote>
+<p class="p1"><span class="s1">FROM owasp/zap2docker-stable</span></p>
+<p class="p1"><span class="s1">MAINTAINER Anshuman Bhartiya &lt;anshuman.bhartiya@gmail.com&gt;</span></p>
+<p class="p1"><span class="s1">RUN apt-get update &amp;&amp; apt-get install -y \</span></p>
+<p class="p1"><span class="s1"> python-pip</span></p>
+<p class="p1"><span class="s1">RUN pip install python-owasp-zap-v2</span></p>
+<p class="p1"><span class="s1">ADD runzap.py /zap/ZAP_2.4.0/</span></p>
+</blockquote>
+<p>2. runzap.py (This script is slightly modified from <a href="https://github.com/zaproxy/zaproxy/wiki/ApiPython">here</a>. Credit also due <a href="https://www.securify.nl/blog/SFY20150303/automating_security_tests_using_owasp_zap_and_jenkins.html">here</a>.)</p>
+<blockquote>
+<p class="p1"><span class="s1">#!/usr/bin/env python</span></p>
+<p class="p1"><span class="s1">import os</span></p>
+<p class="p1"><span class="s1">import subprocess</span></p>
+<p class="p1"><span class="s1">import time</span></p>
+<p class="p1"><span class="s1">import urllib</span></p>
+<p class="p1"><span class="s1">from pprint import pprint</span></p>
+<p class="p1"><span class="s1">from zapv2 import ZAPv2</span></p>
+<p class="p1"><span class="s1">import sys</span></p>
+<p class="p1">#Starting ZAP as a daemon on port 8090</p>
+<p class="p1"><span class="s1">print 'Starting ZAP ...'</span></p>
+<p class="p1"><span class="s1">subprocess.Popen(["zap.sh","-daemon","-port 8090","-host 0.0.0.0"],stdout=open(os.devnull,'w'))</span></p>
+<p class="p1"><span class="s1">print 'Waiting for ZAP to load, 10 seconds ...'</span></p>
+<p class="p1"><span class="s1">time.sleep(10)</span></p>
+<p class="p1">#Taking the IP address to scan against through the command line. This is where you will provide the value for http://$WEBDOCKERIP:$WEBDOCKERPORT in the above bash script</p>
+<p class="p1"><span class="s1">target = sys.argv[1]</span></p>
+<p class="p1"><span class="s1">print target</span></p>
+<p class="p1"><span class="s1">zap = ZAPv2()</span></p>
+<p class="p1"><span class="s1">print 'Accessing target %s' % target</span></p>
+<p class="p1"><span class="s1">zap.urlopen(target)</span></p>
+<p class="p1"><span class="s1">time.sleep(2)</span></p>
+<p class="p1">#Spidering the target</p>
+<p class="p1"><span class="s1">print 'Spidering target %s' % target</span></p>
+<p class="p1"><span class="s1">zap.spider.scan(target)</span></p>
+<p class="p1"><span class="s1">time.sleep(2)</span></p>
+<p class="p1"><span class="s1">while (int(zap.spider.status) &lt; 100):</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>print 'Spider progress %: ' + zap.spider.status</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>time.sleep(2)</span></p>
+<p class="p1"><span class="s1">print 'Spider completed'</span></p>
+<p class="p1"><span class="s1">time.sleep(5)</span></p>
+<p class="p1">#Scanning the target</p>
+<p class="p1"><span class="s1">print 'Scanning target %s' % target</span></p>
+<p class="p1"><span class="s1">zap.ascan.scan(target)</span></p>
+<p class="p1"><span class="s1">while (int(zap.ascan.status) &lt; 100):</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>print 'Scan progress %: ' + zap.ascan.status</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>time.sleep(5)</span></p>
+<p class="p1"><span class="s1">print 'Scan completed'</span></p>
+<p class="p1">#Printing the XMLreport and saving it on the file system of the ZAP container at /zap/ZAP_2.4.0/report.xml which we will later copy to the Host OS</p>
+<p class="p1"><span class="s1">with open("/zap/ZAP_2.4.0/report.xml", "w") as f:</span></p>
+<p class="p1"><span class="s1"> f.write(zap.core.xmlreport)</span></p>
+<p class="p1"><span class="s1"> f.close()</span></p>
+<p class="p1"><span class="s1">zap.core.shutdown()</span></p>
+</blockquote>
+<p class="p1">That's all you need pretty much. 3 files -</p>
+<ol>
+<li class="p1">The main bash script. I have uploaded this <a href="https://gist.github.com/anshumanbh/112d7ef300e2bf9fdcd4">here</a> as well.</li>
+<li class="p1">Dockerfile to build the custom image and container. I have uploaded this <a href="https://gist.github.com/anshumanbh/4eef8142770d6305b836">here</a> as well.</li>
+<li class="p1">runzap.py script that is used to start the ZAP daemon and run it against an IP. I have uploaded this <a href="https://gist.github.com/anshumanbh/d9881fadd6bc194fcaed">here</a> as well.</li>
+</ol>
+<p>Once you have all these files, navigate to the folder you created on your host OS and build the Dockerfile with the following command:</p>
+<blockquote><p>docker build -t test .</p></blockquote>
+<p>After this file is built, type:</p>
+<blockquote><p>docker images</p></blockquote>
+<p>you should now see the test image being listed in your repository.</p>
+<p>And, to save some time, download the other container as well with the following command:</p>
+<blockquote><p>docker pull training/webapp</p></blockquote>
+<p>In the end, you should see 3 docker images in your repository:</p>
+<ol>
+<li>test</li>
+<li>owasp/zap2docker-stable</li>
+<li>training/webapp</li>
+</ol>
+<p>You should be good to go now to run the main bash script. So, just enter:</p>
+<blockquote><p>bash zaprun.sh</p></blockquote>
+<p>Hopefully, everything goes fine and you will see the report.xml file in your current directory.</p>
+<p>Cheers!!</p>

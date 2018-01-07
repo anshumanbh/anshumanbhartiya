@@ -1,0 +1,54 @@
+---
+layout: post
+title: Security Issues with Friction-less Signup flows
+date: 2014-07-16 12:21:45.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Security
+tags: []
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  geo_public: '0'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>I believe this issue affects a lot of applications that have friction-less signup flows i.e. creating accounts without first confirming it via email. This can affect applications in different ways depending upon the functionalities that exist in that application.</p>
+<p>For instance, this can lead to a Logical Denial of Service (which is what I will be discussing in this blog), spamming legitimate victim users of activities that they are not aware of, etc.</p>
+<p>For the Logical DoS, the attack is actually pretty simple. The only assumption I am going to do here is that username enumeration is possible - which we see is a case for a lot of websites as it is considered by design and a feature provided to aid users:</p>
+<ol>
+<li>An attacker enumerates a legitimate user account email in the vulnerable application. Let’s say this is <a href="mailto:victim@gmail.com">victim@gmail.com</a>. This of course means that the application uses email addresses as their username.</li>
+</ol>
+<ol start="2">
+<li>The attacker then locks this user’s account by providing the right email and wrong password multiple times.</li>
+</ol>
+<ol start="3">
+<li>The legitimate user tries to login his account by providing his password but cannot login because his account is locked out.</li>
+</ol>
+<ol start="4">
+<li>Meanwhile, an attacker creates multiple dummy accounts that have email address in the format victim+&lt;id&gt;@gmail.com. Remember there is no email confirmation required for an attacker to confirm the creation of such accounts.</li>
+</ol>
+<ol start="5">
+<li>Now, the victim user obviously has to request password reset since he is locked out. So, he goes ahead and requests one.</li>
+</ol>
+<ol start="6">
+<li>At the same time, the attacker also requests password resets for the multiple accounts that he created i.e. victim+&lt;id&gt;@gmail.com. There is nothing stopping the attacker from doing this. The rate limitation on password reset is a moot point here because the attacker is not requesting the password reset for the same account multiple times. But, instead, he is requesting password resets for multiple different accounts that eventually correspond to the same email address. See the risk of friction-less signup yet?</li>
+</ol>
+<ol start="7">
+<li>All these password reset emails will go to the victim i.e. <a href="mailto:victim@gmail.com">victim@gmail.com</a> since victim+&lt;id&gt;@gmail.com is the same as <a href="mailto:victim@gmail.com">victim@gmail.com</a> from an email perspective. An important point to note here is that common email providers like Gmail clubs these emails into one single thread making it even more confusing to determine which email corresponds to which email address. In Gmail particularly, unless one clicks on a small arrow to see the email address, all the emails say <strong>“To me”</strong>:</li>
+</ol>
+<p><strong><em>Thus,</em></strong> <strong><em>if there is no clear distinction in the body of these emails as to what account the password-reset email corresponds to, the victim will have a difficult time finding the right password reset link for his original account and will continue to be locked out. This results in a Logical DoS.  </em></strong></p>
+<p>Cheers,</p>
+<p>Anshuman</p>

@@ -1,0 +1,36 @@
+---
+layout: post
+title: Learning Nagios -  2
+date: 2011-10-19 14:05:51.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Monitoring
+tags:
+- Nagios
+- Notification
+meta:
+  _edit_last: '28002546'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Some important Nagios commands that is used on a daily basis:</p>
+<p>1) ./nagiostats</p>
+<p>2) ./nagios stop</p>
+<p>3) /etc/init.d/nagios restart</p>
+<p>4) ./nagios -v /usr/local/nagios/etc/nagios.cfg</p>
+<p>5) ./nagios -d /usr/local/nagios/etc/nagios.cfg</p>
+<p><strong>Setting up Notifications:</strong></p>
+<ul>
+<li>We need to define contacts and contact groups. Assign the contacts to the appropriate contact groups. Eg., system administrators, database administrator</li>
+<li>Define host and hostgroups. Assign the hosts to the appropriate hostgroups Eg., a server which has database installed to the database server host group and so on</li>
+<li>Then, finally define services to be monitored and assign the appropriate host name and contact group to the definition of these services so that notifications are sent out to the right people and not to everyone - Separation of Concern.</li>
+</ul>
+<div>Test your config by running the 4th command above. Restart or reload nagios by running the 3rd command.</div>

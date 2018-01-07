@@ -1,0 +1,96 @@
+---
+layout: post
+title: Dockerizing Lair Framework
+date: 2016-06-09 22:37:09.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+- Database
+- DevOps
+- Installation
+- Security
+tags:
+- Docker
+- lair
+- MongoHQ
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '23690266051'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>If you are not familiar with the <a href="https://github.com/lair-framework">Lair framework</a>, I highly recommend you check it out. It is a nice GUI to visualize scans and triage them without having to maintain all the information / database elsewhere.</p>
+<p>And, with Docker, the best part is that you don't have to worry about starting the different pieces of the LAIR framework individually like the documentation asks us to <a href="https://github.com/lair-framework/lair/wiki/Installation">here</a>. Just follow me along!</p>
+<blockquote><p>The first thing is to clone the repo from my github - https://github.com/anshumanbh/docker-lair</p></blockquote>
+<p>Once you have the repo locally, change the &lt;IP&gt; value to the external IP wherever your docker daemon is listening. The places where this needs to change are:</p>
+<ul>
+<li>.env file</li>
+<li>proxy/Dockerfile</li>
+<li>rs.initiate command (towards the end of this guide)</li>
+</ul>
+<p>DON'T FORGET TO CHANGE THIS!</p>
+<p>Also, make sure you have docker and docker-compose installed on your local system.</p>
+<blockquote><p>Next, run "docker-compose build" from the docker-lair directory that has the docker-compose.yml file.</p></blockquote>
+<p>Go grab a beer!! No, seriously do it. The build process will take some time.</p>
+<blockquote><p>Once the docker build process finishes, run "docker images" and you should see the following images:</p></blockquote>
+<p><img class="alignnone size-full wp-image-467" src="{{ site.baseurl }}/assets/screen-shot-2016-06-09-at-8-09-09-pm1.png" alt="Screen Shot 2016-06-09 at 8.09.09 PM" width="1704" height="318" /></p>
+<blockquote><p>Then, as root check if the "db" and "db/_data" folders exists in "/var/lib/docker/volumes/" folder or not. If they don't, you need to create them:</p></blockquote>
+<ul>
+<li>
+<blockquote><p>mkdir /var/lib/docker/volumes/db</p></blockquote>
+</li>
+<li>
+<blockquote><p>mkdir /var/lib/docker/volumes/db/_data</p></blockquote>
+</li>
+</ul>
+<p>Moving along, we are now going to start a container from the "dockerlair_mongo" image. We have to do this because we need to <em><strong>initiate a replication set</strong></em> in the mongo database before we could bring the entire environment up. It is something that we have to do to get LAIR up and running. Don't ask me why! So, the way we do that is:</p>
+<blockquote><p>docker run -d -p 27017:27017 -v db:/data/db dockerlair_mongo /bin/bash -c '/usr/bin/mongod --quiet --nounixsocket --replSet rs0'</p></blockquote>
+<p>If you're familiar with the docker run command, you will notice that we are running the container as a daemon (-d flag), exposing port 27017 (-p flag), associating a data volume with this container (-v flag) and then once the container is started we are running the command "/usr/bin/mongod --quiet --nounixsocket --replSet rs0". This will basically start the mongo daemon on the server with the replication set. It won't initiate the replication set. We will do that after this step. Notice that we are creating a persistent data volume for our database so if we need to migrate to a different environment, just copy pasting the "/var/lib/docker/volumes/db" directory in the new environment will help us get our data back. Also, grab the container name that gets started after running the above command.</p>
+<p>Next, we need to run</p>
+<blockquote><p>docker exec -it &lt;container_name&gt; /bin/bash</p></blockquote>
+<p>We are now trying to enter into a bash shell inside that mongo db container because like I said above, we need to initiate a replication set. So, once you are inside the bash shell, run</p>
+<blockquote><p>mongo</p></blockquote>
+<p>and you should be able to see the mongodb shell. Type the following commands one after the other in that shell:</p>
+<blockquote><p>use admin</p>
+<p>rs.initiate({_id:"rs0", members: [{_id: 1, host: "&lt;IP&gt;:27017"}]})</p>
+<p>rs.status()</p></blockquote>
+<p>The output should look like:</p>
+<p><img class="alignnone size-full wp-image-504" src="{{ site.baseurl }}/assets/screen-shot-2016-06-09-at-9-31-52-pm.png" alt="Screen Shot 2016-06-09 at 9.31.52 PM" width="1818" height="1386" /></p>
+<p>In this step, we switched to the db admin and then initiated the replication set command. We finally checked the status to make sure everything looks good. You can now quit from the mongodb shell and exit from the root prompt of that container:</p>
+<blockquote><p>quit()</p>
+<p>exit</p></blockquote>
+<p>Once you are done with this step, stop and remove the docker container that you started above. Our work is mostly done by now.</p>
+<p>We had to do the steps above because we wanted the status of the replication set to propagate in our persistent data volume in the folder /var/lib/docker/volumes/db. If there is an easy way to bootstrap all of this with Docker, please let me know. I am more than happy to avoid these extra steps above.</p>
+<p>One good thing about doing the extra steps above is that you only have to do it once when you first start the entire environment of the LAIR framework. You won't have to do it again unless you move your containers to a new environment and the IP changes. Now, that is a whole different issue that we can dive into later. It is a painful process.</p>
+<p>&nbsp;</p>
+<p>Our final step would be to just bring up the entire LAIR environment by typing the below command from the docker-lair directory because our docker-compose.yml file is there, remember?</p>
+<blockquote><p>docker-compose up -d</p>
+<p>And, you can browse to your LAIR API at https://&lt;IP&gt;:11013</p></blockquote>
+<p>It will look like:</p>
+<p><img class="alignnone size-full wp-image-514" src="{{ site.baseurl }}/assets/screen-shot-2016-06-09-at-9-59-15-pm.png" alt="Screen Shot 2016-06-09 at 9.59.15 PM" width="2868" height="1466" /></p>
+<p>So, that's it folks!!</p>
+<p><em><strong>The section below will have some steps that need to be followed ONLY if you want to migrate your lair database to a new environment.</strong></em></p>
+<p>In order to do this, we need to make sure that the replication set we initiated above in our old environment with the old IP needs to change. The old IP needs to be changed to the new IP. Unfortunately, this is not straightforward either.</p>
+<p>You would begin first by copying the entire /var/lib/docker/volumes/db directory into the new environment to make sure you get your data back.</p>
+<p>Then, you would need to obviously change the &lt;IP&gt; in all the files accordingly.</p>
+<p>After that, you would start the mongo db container again like above and get into the mongo shell. If you do a rs.status() then, you would see that the replication set has already been initiated with the old IP. This is because of the database that we just copied over from the old environment.</p>
+<p>So, in order to change this, you have to run the following commands from the mongo shell:</p>
+<blockquote>
+<p class="p1">&gt; use local</p>
+<p class="p1">&gt; cfg = db.system.replset.findOne({_id:"rs0"})</p>
+<p class="p1">&gt; cfg.members[0].host="&lt;newIP&gt;:27017"</p>
+<p class="p1">&gt; db.system.replset.update({_id:"rs0"},cfg)</p>
+<p class="p1">&gt; use admin</p>
+<p class="p1">&gt; db.shutdownserver()</p>
+</blockquote>
+<p>We just replaced the old IP with the new one and shutdown the server. Whenever we start the mongodb container again and start the mongod daemon again, this change would be reflected and you would be up and running in the new environment!</p>
+<p>Cheers!!</p>

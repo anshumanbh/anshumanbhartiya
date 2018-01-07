@@ -1,0 +1,57 @@
+---
+layout: post
+title: Manage recipes on a chef-client from a workstation on Amazon EC2 instances
+date: 2011-11-16 16:52:55.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+- DevOps
+- Installation
+tags:
+- Amazon
+- Chef
+- EC2
+- Knife Bootstrap
+meta:
+  _edit_last: '28002546'
+  _wpas_done_yup: '1'
+  _wpas_done_fb: '1'
+  _wpas_done_linkedin: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>So, continuing from my last post, this is mostly going to be dealing with how to manage the recipes on the CL1 (chef-client-1) from the workstation. Both these are Amazon instances hosted in our Ec2 farm. The workstation is the base 64-bit Linux instance available via the public AMIs provided by the AWS console. The CL1 (chef-client-1) is a Ubuntu 11.04 instance started from an AMI which is out there too. I chose a different distro for the CL1 because Chef is supposed to work absolutely fine with Ubuntu and there was a "knife bootstrap" command syntax available for Ubuntu. And, I chose RedHat for the workstation because I'm generally familiar and comfortable with RedHat. You can choose different distros as per your convenience.</p>
+<ul>
+<li>To get started, we can manage the recipes on the CL1 in two ways - one by having a chef-client daemon running on that box and the other by running the ' sudo chef-client' command everytime you do any changes and upload them to the hosted chef server by ssh-ing to Cl1 (the last steps in my previous post).</li>
+<li>But, before doing that, we need to add a recipe to the run-list of the CL1 which as of now doesn't have any recipes associated with it. So, asssuming that you have the getting-started cookbook installed on your workstation (knife cookbook site install getting-started), the next step would be to upload it by typing 'knife cookbook upload getting-started'.</li>
+<li>Once this upload is done to the hosted chef server, we need to add this recipe to the run-list of CL1 by typing 'knife node run_list add CL1 'recipe[getting-started]''</li>
+<li>So, we have associated the recipe to our chef client CL1. To have the chef client run this recipe, we can do this in 2 ways as described above.</li>
+<li>If we want to run it manually, we need to ssh to CL1 from the workstation and run the 'sudo chef-client' command by typing 'knife ssh -i Chef-WS.pem name:CL1 -x ubuntu "sudo chef-client"'</li>
+<li>If we want to have the chef-client service run as a daemon on CL1, we need to first install a new cookbook called "chef-client" and then add this recipe to CL1 so that it starts the daemon and automatically configures CL1 everytime we do any changes to the cookbooks or recipes. Please refer to the instructions <a href="http://wiki.opscode.com/display/chef/Client+Bootstrap+Quick+Start">here</a>.</li>
+</ul>
+<div>We have figured out how to get recipes associated to chef-clients so that they can be configured automatically. Now, we are going to do some changes to some recipes and then upload it to see it getting reflected on the chef-clients. Also, please not that "git" will be involved here to make sure we have proper source control when we do this.</div>
+<div>
+<ul>
+<li>So, go ahead and edit the default template in the getting-started recipe. Add something like the hostname that you would want to see on the chef-client.</li>
+<li>Once you do that, you run the knife cookbook upload command to upload it to the hosted server.</li>
+<li>If you have the daemon running on the chef-client, it will automatically run at an interval and take the changes to the recipe and reflect it. You can then verify it. If not, you can use the knife ssh command to ssh to the chef-client and run the sudo command manually to see the changes. Also, you can login the chef-client and run a command 'sudo chef-client -i --3600 -s --600' to have the service run nonstop at periodic intervals.</li>
+<li>Now, once you have propagated the changed to the chef-client, you need to update your local repository too with these changes. So, the first step will be to add the changed file to your local git repository. You can type 'git status' while being in the ~/chef-repo directory and see what file has to be updated. You should type something like 'git add cookbooks/getting-started'. This will add the updated files to your local repository.</li>
+<li>You then commit it by typing 'git commit -m 'changed the default recipe''. You are all set on your local git repo with the updated versions and all the files being properly source controlled.</li>
+<li>You should also think about having the backup of your files to a remote repo like the one provided by github. You can follow the steps mentioned on the github website on how to setup. But, the basic gist is to initiate a connection from your local repo to your remote repo by typing 'git init' command.</li>
+<li>Then, you need to create a connection by typing 'git remote add github &lt;url&gt;/&lt;repo-name&gt;.git'</li>
+<li>Finally, you need to push the changes by typing 'git push github master'. You can add any name instead of 'github' in the above two commands. Its just a name for the connection.</li>
+<li>You are all set!</li>
+</ul>
+<div>P.S. - So, one thing to take from this is while bootstrapping new chef-clients from the workstation, you can assign them the recipe of "chef-client" so that when they spawn up, the chef-client daemon is started and you no longer have to ssh and run the sudo chef-client manually everytime you do any changes to other recipes or cookbooks.</div>
+<ul>
+<li></li>
+</ul>
+</div>

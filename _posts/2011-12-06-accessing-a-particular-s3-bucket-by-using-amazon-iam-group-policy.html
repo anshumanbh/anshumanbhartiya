@@ -1,0 +1,57 @@
+---
+layout: post
+title: Accessing a particular S3 bucket by using Amazon IAM Group Policy
+date: 2011-12-06 15:20:41.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+tags:
+- Amazon
+- AWS
+- IAM
+- S3
+meta:
+  _edit_last: '28002546'
+  _wpas_done_yup: '1'
+  publicize_results: a:1:{s:2:"fb";a:1:{i:510360103;a:2:{s:7:"user_id";s:9:"510360103";s:7:"post_id";s:17:"10151008873230104";}}}
+  _wpas_done_fb: '1'
+  _wpas_done_linkedin: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>I had a requirement come in today morning from my boss. We had to give access to certain people to be able to access a S3 bucket in our Amazon account. Now, for those who don't know what a S3 bucket is or what the AWS platform is, you won't understand anything in this post.</p>
+<p>Till now we have been putting up all our documentation in our internal wiki but we have realized that it's really not that great and helpful. There are access issues and a whole bunch of technicalities to deal with. So, using S3 was something new and interesting that we had to do and it was pretty easy in the end to figure out.</p>
+<p>Anyways, we built a Disaster Recovery solution for one of our customers and we wanted to share some DR documentation with our security team. Since we built it on the AWS platform, we figured sharing/maintaining the documents on the AWS would make more sense. So, I was told to upload certain documents and files in a S3 bucket that the security team could have access to. But, since we have a whole bunch of other stuff in our S3, it was a bit tricky to figure out how to go about doing this. Also, we wanted to give them AWS console access from where all the other features of the AWS platform like the EC2/RDS instances, VPC, IAM etc can also be accessed if you are a user in the IAM list. So, we had to make sure that every other access was denied to them except to that one particular S3 bucket.</p>
+<p>The first thing I did was create a new Group in the IAM console. Then, I created the users for the security team and allocated them to the previously created group. Now, 2 things to note here.</p>
+<ul>
+<ul>
+<li>While creating the users, you are being given a set of access keys which you can download only once. These access keys are needed if the users want to use the AWS CLI. Since, in our case, we didn't want the users to do anything with the CLI and only access the AWS console, there was no need for them to have these access keys. Then, by default, when you create users, there are no passwords assigned to them. So, there is no way they can login the console. So, for this, you as an admin will have to assign them a default password which they can change at a later stage. Once, this password is assigned, the users all set to access the AWS console. The url to login might be different in different cases. Since, we have our own account and users, we have a specific URL that we use to login the AWS console.</li>
+<li>The next thing we need to do is assign a Group Policy for the group that we created in the first step. This group policy will define what permissions and access rights will pertain to the users of this group. This might seem pretty straightforward but if you want to have users access to particular S3 buckets only, you need to understand that there have to be 2 policies and not just one. You can create these policies by using the Policy Template but that provides access to all the buckets. So, in our case, we had to write a custom policy. Please note here that the Policy Generator didn't generate the right policy for us either. We had to tweak a little bit.</li>
+</ul>
+</ul>
+<p>The first policy looks like this:</p>
+<p><a href="http://abhartiya.files.wordpress.com/2011/12/screenshot058.jpg"><img class="alignleft size-full wp-image-95" title="ScreenShot058" src="{{ site.baseurl }}/assets/screenshot058.jpg" alt="" width="290" height="134" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>The second policy looks like this:</p>
+<p><a href="http://abhartiya.files.wordpress.com/2011/12/screenshot059.jpg"><img class="alignleft size-full wp-image-96" title="ScreenShot059" src="{{ site.baseurl }}/assets/screenshot059.jpg" alt="" width="285" height="174" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>Instead of "OHP-DR-DOCS", insert your bucket name.</p>
+<p>So, as we can see from the above policies, that we first need to list all the buckets for that particular user. Then, after all the buckets are listed, we have to allow access to only one particular bucket. If you try to combine both into one or simply allow access to one particular bucket without listing, this won't work.</p>
+<p>That's it for now!</p>

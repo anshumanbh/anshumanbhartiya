@@ -1,0 +1,142 @@
+---
+layout: post
+title: Learning Nagios (NRPE for Linux Boxes) contd - 4
+date: 2011-11-01 12:00:31.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Monitoring
+tags:
+- Linux
+- Nagios
+- NRPE
+meta:
+  _edit_last: '28002546'
+  _wpas_skip_twitter: '1'
+  _wpas_done_yup: '1'
+  _wpas_done_fb: '1'
+  _wpas_done_linkedin: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p><strong>OPEN THE FIREWALL RULES</strong></p>
+<p>So, as far as our environment is concerned, I don't think I need to open any Firewall rules as such because of a couple of reasons:<br />
+1) We have these boxes in the HP datacenter and none of the boxes have iptables running on them<br />
+2) All of these boxes are able to communicate with each other with nothing blocking the connections between them.<br />
+Having said this, if we would have had to monitor, say for example, a host on the Amazon environment from our HP data center, we might have to look at the firewall rules but as of now, we are good to go. But, if you do need to open some of the rules, please follow the instructions as mentioned in the NRPE.pdf on the nagios website.</p>
+<p><strong>CUSTOMIZE NRPE COMMANDS</strong><br />
+We can configure or write custom nrpe command definitions in /usr/local/nagios/etc/nrpe.cfg file but I am not going to do that as of now.</p>
+<p><strong>SETTING UP THE MONITORING HOST</strong></p>
+<p><strong>Step 1:</strong><br />
+First step would be to install the nrpe-plugin on the monitoring host (xxx-vm109)<br />
+sudo to root on xxx-vm109 which is the monitoring host on which the nagios server is running<br />
+cd /home/nagios/<br />
+mkdir downloads<br />
+cd downloads/<br />
+wget http://prdownloads.sourceforge.net/sourceforge/nagios/nrpe-2.12.tar.gz<br />
+tar xvf nrpe-2.12.tar.gz<br />
+cd nrpe-2.12<br />
+./configure<br />
+make all<br />
+make install-plugin</p>
+<p>Now, to make sure the check_nrpe plugin is installed correctly on the monitoring host and that both the hosts are able to communicate with each other, run the below command and you should see an output like the one below:<br />
+[root@xxx-vm109 nrpe-2.12]# /usr/local/nagios/libexec/check_nrpe -H &lt;hip&gt;<br />
+NRPE v2.12</p>
+<p>Here, sip is the monitoring host and hip is the linux host being monitored remotely. So, everything looks okay so far.</p>
+<p><strong>Step 2:</strong><br />
+Now, we need to add a command definition in the /usr/local/nagios/etc/objects/commands.cfg file on the monitoring host for the 'check_nrpe' command.<br />
+so, su - nagios<br />
+vi /usr/local/nagios/etc/objects/commands.cfg<br />
+Add the following definition to the file:<br />
+define command{<br />
+command_name check_nrpe<br />
+command_line $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$<br />
+}</p>
+<p><strong>Step 3:</strong><br />
+Final step would be to create nagios host and service definitions for monitoring the remote host. All this should be done on the nagios server which is the monitoring host which is xxx-vm109 in our case. The config files are found at /usr/local/nagios/etc/objects Now, I dont have to create a separate config file as specified in the guide for linux-box because I already have a file 'linux.cfg' configured for linux servers. I just need to add the host definition for the remote host in that file as below:</p>
+<p>define host{<br />
+use linux-server ; Name of host template to use ; This host definition will inherit all variables that are defined ; in (or inherited by) the linux-server host template definition.<br />
+host_name xxx-vm066<br />
+alias HP Amazon Tools Box<br />
+address &lt;hip&gt; }</p>
+<p>Also, I am just going to add this host as a member in the hostgroup as mentioned below along with the host axway-vm109 which was already there:</p>
+<p>define hostgroup{<br />
+hostgroup_name linux-servers ; The name of the hostgroup alias Linux Servers ; Long name of the group<br />
+members xxx-vm109, xxx-vm066 ; Comma separated list of hosts that belong to this group<br />
+}</p>
+<p>Finally, I need to add some service definitions to be monitored on the remote host for the host xxx-vm066 as mentioned below:<br />
+# The following service will monitor the CPU load on the remote host. The "check_load" argument that is passed to<br />
+# the check_nrpe command definition tells the NRPE daemon to run the "check_load" command as defined in the<br />
+# nrpe.cfg file.<br />
+define service{<br />
+use generic-service<br />
+host_name xxx-vm066<br />
+service_description CPU Load<br />
+check_command check_nrpe!check_load<br />
+}</p>
+<p># The following service will monitor the the number of currently logged in users on the remote host.<br />
+define service{<br />
+use generic-service<br />
+host_name xxx-vm066<br />
+service_description Current Users<br />
+check_command check_nrpe!check_users<br />
+}</p>
+<p># The following service will monitor the free drive space on /dev/hda1 on the remote host.<br />
+define service{<br />
+use generic-service<br />
+host_name xxx-vm066<br />
+service_description /dev/hda1 Free Space<br />
+check_command check_nrpe!check_hda1<br />
+}</p>
+<p># The following service will monitor the total number of processes on the remote host.<br />
+define service{<br />
+use generic-service<br />
+host_name xxx-vm066<br />
+service_description Total Processes<br />
+check_command check_nrpe!check_total_procs<br />
+}</p>
+<p># The following service will monitor the number of zombie processes on the remote host.<br />
+define service{<br />
+use generic-service<br />
+host_name xxx-vm066<br />
+service_description Zombie Processes<br />
+check_command check_nrpe!check_zombie_procs<br />
+}</p>
+<p><strong>Step 4:</strong><br />
+We need to restart Nagios now to make sure the changes that we made are in effect.<br />
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg<br />
+exit to root and /etc/init.d/nagios restart</p>
+<p><strong>Step 5:</strong><br />
+For customizing or adding more services to monitor on the remote host from the monitoring host, we need to perform 2 steps:<br />
+1) Add a new command definition to the nrpe.cfg file on the remote host.<br />
+2) Add a new service definition to your Nagios configuration on the monitoring host.</p>
+<p>Example: We want to monitor the swap usage on the remote host. We already have a plugin check_swap installed on the remote host so we can just use that. the command to create an alert if the swap free space is less than 10% and a warning if free space is less than 20% is:<br />
+./check_swap -w 20% -c 10%<br />
+Now, add this command to the /usr/local/nagios/etc/nrpe.cfg file like this:<br />
+command[check_swap]=/usr/local/nagios/libexec/check_swap -w 20% -c 10%</p>
+<p>Now, if the NRPE daemon is running as a standalone daemon, you might want to restart it. If its running under the inetd/xinetd superserver, you don't have to do anything.</p>
+<p>Now, comes the monitoring host. We need to add the service definition for the check_swap plugin. So, edit the config file that you have been using to add services for the remote host and add the below service:<br />
+define service{<br />
+use generic-service<br />
+host_name xxx-vm066<br />
+service_description Swap Usage<br />
+check_command check_nrpe!check_swap<br />
+}</p>
+<p>Dont forget to restart nagios from root.</p>
+<p><strong>UPGRADING NRPE</strong><br />
+Its pretty simple to do it on the Monitoring Host. We need to install the plugin.<br />
+Just download the latest nrpe plugin, untar it, cd to its folder.<br />
+Run ./configure and do make all.<br />
+After this, do make install-plugin and you are done.</p>
+<p>For the remote hosts, we need to upgrade the NRPE daemons on all the remote hosts. So, all the steps are pretty much the same here as above except the make install-daemon command instead of make install-plugin.<br />
+make sure before installing the new daemon, there are no old daemons running. Kill em all!</p>
+<p>THATS IT FOR THE NRPE PLUGIN. I am now going to research and try to implement Chef so that all the hosts can be configured with the NRPE addon automatically rather than me having do it manually.<br />
+This is exciting!<br />
+NAGIOS+CHEF = I love it!</p>

@@ -1,0 +1,113 @@
+---
+layout: post
+title: Learning Nagios (Installation) - 1
+date: 2011-10-19 14:00:45.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Monitoring
+tags:
+- Installation
+- Nagios
+meta:
+  _edit_last: '28002546'
+  _wpas_skip_yup: '1'
+  _wpas_skip_twitter: '1'
+  _wpas_skip_fb: '1'
+  _wpas_skip_linkedin: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>So, below are the steps in brief that I used to install Nagios on our server:</p>
+<p><strong>Step 1:</strong></p>
+<p>Add 'apache' user and group to install apache tomcat:<br />
+useradd apache<br />
+groupadd apache</p>
+<p>Then, add 'nagios' user and 'nagcmd' group to install nagios:<br />
+useradd -m nagios =&gt; Here, the "-m" option creates a home directory at /home/nagios<br />
+passwd nagios =&gt; set the password<br />
+groupadd nagcmd</p>
+<p>Then, modify the group nagcmd for the users nagios and apache<br />
+usermod -a -G nagcmd nagios =&gt; Here, -a -G helps us assign a supplemental group nagcmd to the user nagios. The primary default group is still nagios<br />
+usermod -a -G nagcmd apache</p>
+<p><strong>Step 2:</strong></p>
+<p>Download the apache web server from <a href="http://webdesign.about.com/gi/o.htm?zi=1/XJ&amp;zTi=1&amp;sdn=webdesign&amp;cdn=compute&amp;tm=530&amp;f=00&amp;su=p284.12.336.ip_p504.1.336.ip_&amp;tt=2&amp;bt=1&amp;bts=1&amp;zu=http%3A//httpd.apache.org/download.cgi">here</a>.</p>
+<p>Install it following the instructions from <a href="http://webdesign.about.com/cs/apache/a/aainstallapache.htm">here</a>.</p>
+<p><strong>Step 3:</strong></p>
+<p>gunzip -d httpd-2_0_NN.tar.gz<br />
+tar xvf httpd-2_0_NN.tar<br />
+./configure<br />
+make<br />
+make install</p>
+<p>vi /usr/local/apache2/conf/httpd.conf<br />
+Change the user to apache and group to apache<br />
+serveradmin - abhartiya@xxx.com<br />
+servername - &lt;sip&gt;:80</p>
+<p>go to /usr/local/apache2/bin and then do ./apachectl start<br />
+go to http://&lt;sip&gt;/ and it should open</p>
+<p>Note - you can set a runlevel on the httpd service so that it starts on booting up. Some kind of script will have to go in /etc/rc.d/init.d</p>
+<p><strong>Step 4:</strong></p>
+<p>After installing apache, we need to install nagios. For this, transfer both the nagios and the nagios plugins folder onto the box which you want to set up as the main server.<br />
+go to that folder /path/to-nagios/folder and run<br />
+./configure --with-command-group=nagcmd<br />
+make all<br />
+make install<br />
+make install-init<br />
+make install-config<br />
+make install-commandmode</p>
+<p>change the email address of the admin at /usr/local/nagios/etc/objects/contacts.cfg to abhartiya@xxx.com</p>
+<p><strong>Step 5:</strong></p>
+<p>we need to make sure that the nagios ui is only accessed by the admin and its secure so for that, we need to vi /usr/local/apache2/conf/httpd.conf and add the below towards the end:</p>
+<p>ScriptAlias /nagios/cgi-bin "/usr/local/nagios/sbin"<br />
+# SSLRequireSSL<br />
+Options ExecCGI<br />
+AllowOverride None<br />
+Order allow,deny<br />
+Allow from all<br />
+# Order deny,allow<br />
+# Deny from all<br />
+# Allow from 127.0.0.1<br />
+AuthName "Nagios Access"<br />
+AuthType Basic<br />
+AuthUserFile /usr/local/nagios/etc/htpasswd.users<br />
+Require valid-user</p>
+<p>Alias /nagios "/usr/local/nagios/share"<br />
+# SSLRequireSSL<br />
+Options All<br />
+AllowOverride None<br />
+Order allow,deny<br />
+Allow from all<br />
+# Order deny,allow<br />
+# Deny from all<br />
+# Allow from 127.0.0.1<br />
+AuthName "Nagios Access"<br />
+AuthType Basic<br />
+AuthUserFile /usr/local/nagios/etc/htpasswd.users<br />
+Require valid-user<br />
+SetHandler application/x-httpd-php</p>
+<p><strong>Step 6:</strong></p>
+<p>Go to /usr/local/apache2/bin and type in the following:<br />
+./htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin =&gt; set the password here</p>
+<p>Restart the apache server<br />
+/usr/local/apache2/bin/httpd -k restart</p>
+<p><strong>Step 7:</strong></p>
+<p>Now, we need to install the nagios plugins:<br />
+go to the folder where you put the nagios plugin folder and run ./configure --with-command-group=nagcmd<br />
+make all<br />
+make install<br />
+chkconfig --add nagios<br />
+chkconfig nagios on<br />
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg<br />
+service nagios start</p>
+<p>Also set the following:<br />
+getenforce<br />
+setenforce 0</p>
+<p><strong>Step 8:</strong></p>
+<p>We also need to install PHP if its not already installed. Please follow the instructions <a href="http://www.thegeekstuff.com/2008/07/instruction-guide-to-install-php5-from-source-on-linux/">here</a>.</p>

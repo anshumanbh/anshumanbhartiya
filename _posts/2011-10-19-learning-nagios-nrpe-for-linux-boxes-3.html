@@ -1,0 +1,84 @@
+---
+layout: post
+title: Learning Nagios (NRPE for Linux boxes) - 3
+date: 2011-10-19 17:02:46.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Monitoring
+tags:
+- Linux
+- Nagios
+- NRPE
+meta:
+  _edit_last: '28002546'
+  _wpas_skip_yup: '1'
+  _wpas_skip_twitter: '1'
+  _wpas_skip_fb: '1'
+  _wpas_skip_linkedin: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Resources: Please note that I am going to follow the instructions as mentioned in the NRPE.pdf available on the nagios website.</p>
+<p>So, we will now try to setup monitoring of a linux server using the NRPE addon.</p>
+<p>Assuming the nagios server or the monitoring host is xxx-vm109 (sip) and the linux host to be monitored is xxx-vm066 (hip)</p>
+<p>We need to first login as root on the 66 box and run the following commands:</p>
+<p>useradd nagios<br />
+passwd nagios<br />
+go to /home/nagios and mkdir downloads<br />
+cd to downloads and run wget http://prdownloads.sourceforge.net/sourceforge/nagiosplug/nagios-plugins-1.4.15.tar.gz<br />
+tar xvf nagios-plugins-1.4.15.tar.gz<br />
+cd nagios-plugins-1.4.15<br />
+./configure<br />
+make<br />
+make install<br />
+chown nagios:nagios /usr/local/nagios<br />
+chown -R nagios:nagios /usr/local/nagios/libexec</p>
+<p>Go back to downloads directory again and download the NRPE plugin -<br />
+wget http://prdownloads.sourceforge.net/sourceforge/nagios/nrpe-2.12.tar.gz</p>
+<p>tar xvf nrpe-2.12.tar.gz<br />
+cd nrpe-2.12<br />
+./configure<br />
+After this, you might get an error like this:<br />
+checking for SSL libraries... configure: error: Cannot find ssl libraries</p>
+<p>So, for this, you basically need to install some libraries. Download the necessary rpms (RHEL5 32 bit) from<a href="http://rpm.pbone.net/index.php3"> here</a>. For some of the below rpms, you have to give --replacefiles option because there will be some conflicts between the new rpms and older rpms.</p>
+<p>rpm -iv --replacefiles e2fsprogs-libs-1.39-33.el5.i386.rpm<br />
+rpm -ivh e2fsprogs-devel-1.39-33.el5.i386.rpm<br />
+rpm -ivh keyutils-libs-devel-1.2-1.el5.i386.rpm<br />
+rpm -iv --replacefiles krb5-libs-1.6.1-62.el5.i386.rpm<br />
+rpm -ivh --replacefiles libselinux-1.33.4-5.7.el5.i386.rpm<br />
+rpm -iv --replacefiles libsepol-1.15.2-3.el5.i386.rpm<br />
+rpm -ivh libsepol-devel-1.15.2-3.el5.i386.rpm<br />
+rpm -ivh libselinux-devel-1.33.4-5.7.el5.i386.rpm<br />
+rpm -ivh krb5-devel-1.6.1-62.el5.i386.rpm<br />
+rpm -ivh zlib-devel-1.2.3-4.el5.i386.rpm<br />
+rpm -iv --replacefiles openssl-0.9.8e-20.el5.i386.rpm<br />
+rpm -ivh openssl-devel-0.9.8e-20.el5.i386.rpm</p>
+<p>You should be good to go now.</p>
+<p>After this, give "make all"</p>
+<p>make install-plugin<br />
+make install-daemon<br />
+make install-daemon-config<br />
+make install-xinetd<br />
+vi /etc/xinetd.d/nrpe file and add sip as the IP address in the only_from directive<br />
+vi /etc/services and add "nrpe 5666/tcp #NRPE" to it<br />
+service xinetd restart</p>
+<p>Then, check if its listening properly:<br />
+[root@xxx-vm066 nrpe-2.12]# netstat -at | grep nrpe<br />
+tcp 0 0 *:nrpe *:* LISTEN</p>
+<p>Then, run<br />
+/usr/local/nagios/libexec/check_nrpe -H localhost</p>
+<p>You might see this error: CHECK_NRPE: Error - Could not complete SSL handshake.</p>
+<p>Well, this basically happens because you have already changed the IP address in the only_from directive above. You will notice that if you change the IP address back to 127.0.0.1 and run the above command, it will give you an output as below:</p>
+<p>[root@xxx-vm066 nrpe-2.12]# /usr/local/nagios/libexec/check_nrpe -H localhost<br />
+NRPE v2.12</p>
+<p>So, after verifying that everything is okay, please go and change back the IP address to the monitoring host again.<br />
+Also, dont forget to restart the xinetd service</p>
+<p>OPEN THE FIREWALL RULES - contd tomorrow</p>

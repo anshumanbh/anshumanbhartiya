@@ -1,0 +1,40 @@
+---
+layout: post
+title: Implementing App Level Encryption in Google PubSub using Google Cloud KMS
+date: 2017-03-07 04:47:49.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- DevOps
+- Security
+tags:
+- gcp
+- kms
+- pubsub
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '2595407864'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>If you need any sort of application level encryption while using Google PubSub as a distributed messaging queue, it is not obvious on how to implement it because there is no documentation from Google that I could find around the exact same thing. There was some code but I had to make sense of it and combine a few other things to get it working finally.</p>
+<p>I was able to implement it using Google Cloud KMS and it was pretty easy to do so. So, here goes..</p>
+<p>You would need a <a href="https://cloud.google.com/compute/docs/access/service-accounts">service account</a> in order to get this working. Next, copy paste the below two files locally:</p>
+<ul>
+<li>testtopic.py - https://gist.github.com/anshumanbh/d60d1600f06e501f83fb01055b8d5e5c</li>
+<li>testsub.py - https://gist.github.com/anshumanbh/f48dc1d9d8b2158252f716a3719bf8e6</li>
+</ul>
+<p>Make sure you have all the libraries installed like gcloud to run these python files. Also, replace the variables that are marked as "&lt;&gt;" as per your GCloud environment. You would need a project_id, location, keyring, cryptokey, testtopic and testsub. testsub would be the subscription for the testtopic.</p>
+<p>You would also need to add "Cloud KMS CryptoKey Encrypter/Decrypter" permissions for your service account by navigating to IAM&amp;Admin -&gt; Key Management in the Console.</p>
+<p>Now, when you run python testtopic.py, that file basically encrypts a json - {test:"test"} and drops it in the testtopic.</p>
+<p>Next, when you run python testsub.py, that file subscribes to testsub that is a subscription for testtopic. It then pulls the data and gets the encrypted data. It then uses the KMS API with the service account credentials to decrypt the message.</p>
+<p>Thus, anybody who is able to grab the messages from the PubSub topic cannot really decrypt any messages because they wouldn't be authorized to do so! Simple and easy..</p>
+<p>&nbsp;</p>

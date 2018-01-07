@@ -1,0 +1,69 @@
+---
+layout: post
+title: Running ZAP against an application with proxied test cases inside Docker containers
+  + Reporting in JIRA + Notification in Slack
+date: 2015-08-24 18:11:23.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+- DevOps
+- Security
+tags:
+- AppSec
+- Docker
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '14060530420'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Building off of my last blog <a href="https://abhartiya.wordpress.com/2015/07/09/automating-zap-running-against-a-web-application-in-docker-containers/">post</a>, I could start two containers - ZAP and the application and then run ZAP against the application and generate a report. However, I observed that this was not getting me good results. Most of the issues reported were missing header issues which weren't that useful to begin with.</p>
+<p>So, I had to figure out a way to make this more meaningful and effective if we were to actively deploy such an automated scanning process in our DevOps pipeline.</p>
+<p>The way I figured this would work was to get some legitimate traffic in ZAP before beginning the scan. And, the way we would get any traffic inside ZAP would be to use it as a proxy first before the actual scanning. Now, this would mean that the application would have to be browsed manually in order to generate the data. But, we were trying to automate this entire process so any form of manual intervention was not desired, at least till the point when the reports need to be triaged.</p>
+<p>Luckily, we had some custom test cases written in Python and Lua that would generate and send some API requests to the application. So, I had to simply do that first (send the test cases to the application proxying it via ZAP) before beginning my ZAP scan. The results of doing this were slightly better. It also meant it took care of the authentication part because the requests that were sent as a result of running the test cases also contained some headers that were used to authenticate to the application so I didn't have to change anything specifically within the ZAP API code.</p>
+<p>We got a few more issues than just the header stuff so I was happy the approach worked. There is still a lot of work to be done but since the application I am dealing with is not a traditional web application, I am looking at a slightly different route now and maybe do something more than just running the ZAP scan. More on that later as and when I have something to blog about.</p>
+<p>A few more things I added to this process were that the reports are now being automatically sent to our JIRA instance and a ticket gets created with the reports as attachments. We also have a webhook for Slack built in so whenever this ticket is created, we get a nice notification in our Slack channel notifying everyone that the scan was run and the report was generated attached to the JIRA ticket for auditing purposes. I also added some exception handling and cleaned the code a little bit.</p>
+<p>Overall, the complete automated process looks like:</p>
+<p><a href="https://abhartiya.files.wordpress.com/2015/07/screen-shot-2015-08-24-at-8-42-38-pm.png"><img class="alignnone size-medium wp-image-243" src="{{ site.baseurl }}/assets/screen-shot-2015-08-24-at-8-42-38-pm.png?w=300" alt="Screen Shot 2015-08-24 at 8.42.38 PM" width="300" height="217" /></a></p>
+<p>zaprun.sh can be found <a href="https://gist.github.com/anshumanbh/1a729109b39fe4feb857">here</a>.</p>
+<p>runzap.py can be found <a href="https://gist.github.com/anshumanbh/9623e39493745053310f">here</a>.</p>
+<p>jiraconnect.sh can be found <a href="https://gist.github.com/anshumanbh/5ff9c4d55710c91c82bc">here</a>. For this script, you will also need to create a folder called "data" in $pwd and then add 2 files in that directory - credentials.json and data.json. Credentials.json will have your username and password to authenticate to JIRA. It will look something like this:</p>
+<blockquote>
+<p class="p1"><span class="s1">{</span></p>
+<p class="p1"><span class="s1"> <span class="Apple-converted-space">  </span>"username": "&lt;username&gt;",</span></p>
+<p class="p1"><span class="s1"> <span class="Apple-converted-space">  </span>"password": "&lt;password&gt;"</span></p>
+<p class="p1"><span class="s1">}</span></p>
+</blockquote>
+<p class="p1">
+<p class="p1">Data.json will have the ID of your JIRA project, summary, description, issue type and label for the issue that will get created. This information can easily be obtained from your JIRA installation using the REST API browser plugin in JIRA. It will look something like this:</p>
+<blockquote>
+<p class="p1"><span class="s1">{</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>"fields": {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>"project":</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>{ </span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>"id": "&lt;id&gt;"</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>},</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>"summary": "ZAP Scan Result",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>"description": "This issue contains the scan results when ZAP is run against the app",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>"issuetype": {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>"id": "&lt;&gt;"</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>},</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>"labels": [</span></p>
+<p class="p1"><span class="s1"> "scan"</span></p>
+<p class="p1"><span class="s1"> ]</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">   </span>}</span></p>
+<p class="p1"><span class="s1">}</span></p>
+</blockquote>
+<p class="p1">
+<p class="p1">And, that's it! A fully automated process of running OWASP ZAP in your Devops build pipeline with test cases being proxied via ZAP inside Docker containers and reporting in JIRA with notifications sent to Slack.</p>
+<p class="p1">Feel free to reach out to me if you have any questions or just to share your experiences if you have been trying to do something similar.</p>
+<p class="p1">Cheers!!</p>

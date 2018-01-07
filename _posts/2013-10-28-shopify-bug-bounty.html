@@ -1,0 +1,66 @@
+---
+layout: post
+title: Shopify Bug Bounty
+date: 2013-10-28 08:47:00.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- bug bounty
+- Security
+- shopify
+- whitehat
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+  _wpas_skip_1005091: '1'
+  _wpas_skip_1005089: '1'
+  _oembed_689754dd113c1fc0c661887a5c1e4a0f: "{{unknown}}"
+  _oembed_ed9d41e5154d77943413e3cd07119b43: "{{unknown}}"
+  _oembed_454478a11ea76ef3689d7b377fcce943: "{{unknown}}"
+  _oembed_06000ec07628760558dcae1203af6bee: "{{unknown}}"
+  _oembed_f137314a8f1903a49e0716bd0a79fce9: "{{unknown}}"
+  _oembed_2dc4277dea2ccebc831a9e1cc21c50db: "{{unknown}}"
+  _oembed_851240bae3c604e1bb249996f1dbc32d: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p><em><strong>UPDATE: I have written a second blog <a href="http://abhartiya.wordpress.com/2013/10/28/shopify-bug-bounty-2-contd-from-the-last-one/">post</a> now following this.</strong></em></p>
+<p><a href="https://www.shopify.com/whitehat">Shopify</a> recently announced their Bug Bounty program. And, I jumped onto the hunt as soon as it was launched. As I was informed by them, I was the second person to register for it.</p>
+<p>This blog post is about what I reported, why they did not consider it as a valid finding then and now it looks like it has been fixed.</p>
+<p>The bug I reported was on the page - https://&lt;myshop&gt;.myshopify.com/admin/settings/payments</p>
+<p>Basically, on this page, an admin can change/edit/add settings related to the admin's shop. There is one particular setting called "Customer Accounts" which looks like this:</p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/10/2013-10-28-11_05_28-themes-payments-shopify.png"><img class="aligncenter size-full wp-image-137" alt="2013-10-28 11_05_28-themes ~ Payments ~ Shopify" src="{{ site.baseurl }}/assets/2013-10-28-11_05_28-themes-payments-shopify.png" width="497" height="136" /></a></p>
+<p>Now, if I were a shop admin, this is pretty self explanatory. If I choose "Accounts are required", customers can <strong>ONLY</strong> check out if they have an account created for them by me. If they don't have an account, they should not be able to check out. Right? We will come back to this later.</p>
+<p>Let's proceed to the finding:</p>
+<p>1. Assuming the shop in question is &lt;myshop&gt;.myshopify.com, navigate to this site as an attacker.</p>
+<p>2. View a product and add it to the cart. Click on the cart.</p>
+<p>3. Proceed to checkout.</p>
+<p>4. Notice that as per our setting above, the attacker is asked to authenticate before being allowed to checkout.</p>
+<p>5. Observe that the URL looks something like this -</p>
+<p>http://&lt;myshop &gt;.myshopify.com/account/login/xxxxxxxxxxxx?checkout_url=https%3A%2F%2Fcheckout.shopify.com%2Fcarts%2F&lt;cart_no&gt;%2F&lt;cart_id&gt;</p>
+<p>6. Now, without authentication, directly navigate to the URL<br />
+https://checkout.shopify.com/carts/&lt;cart_no&gt;/&lt;cart_id&gt;/create_order</p>
+<p>7. Notice that the attacker can now see the name, email address of a registered customer of the shop (the email address masked is the email address for the test1 user that was registered as a customer of this shop by the admin), a form to enter the billing address or choose from an existing billing address of the customer. The screenshot is attached below:</p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/10/2013-10-28-11_32_28-bypassing-authentication-1-windows-photo-viewer.png"><img class="aligncenter size-full wp-image-138" alt="2013-10-28 11_32_28-Bypassing authentication-1.png - Windows Photo Viewer" src="{{ site.baseurl }}/assets/2013-10-28-11_32_28-bypassing-authentication-1-windows-photo-viewer.png" width="497" height="432" /></a></p>
+<p>So, this is what I reported. I feel disclosing information like name, email address and billing address of customers of a particular shop to an unauthenticated attacker is just unnecessary and exposes unwanted risk and more importantly, discloses information about the shop customers.</p>
+<p>Now, I checked it today again and this is what I observed:</p>
+<p>1. The URL in step 5 above now has an additional parameter called "sid". I dont know what this is being used for but this was not present when I tested originally.<br />
+2. When I try to navigate to the URL mentioned in Step 6 above directly, I am not being redirected to the checkout page anymore. This was certainly not the case when I tested it.</p>
+<p>This clearly shows that there were some changes made in the code base.</p>
+<p>Below is what I received regarding my submission:</p>
+<p>"<em><strong>the customer account required is not intended to prevent the actions you outlined, just to make sure that an order is placed from an account.</strong></em>"</p>
+<p>I don't understand how the above justification makes sense. If that functionality is just used to ensure that the order is placed from an account, why would you disclose account details like name, email and billing address to someone who is not even a customer of the shop?</p>
+<p>Secondly, if that functionality is not intended to prevent the actions that I outlined, why does it say that? Am I just blind in reading what its supposed to do? Or, is it just to make the admins feel safe about their customers? I am confused here.</p>
+<p>Needless to say, I did not get any credit for reporting this. And, now it looks like they have fixed it/made changes and this is not reproduce-able anymore. I am disappointed.</p>

@@ -1,0 +1,78 @@
+---
+layout: post
+title: Installing Chef on a workstation and using Knife to bootstrap an Amazon EC2
+  instance
+date: 2011-11-15 16:22:24.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+- DevOps
+tags:
+- Amazon
+- Chef
+- EC2
+- Installation
+- Knife Bootstrap
+- Linux
+meta:
+  _edit_last: '28002546'
+  _wpas_done_yup: '1'
+  _wpas_done_fb: '1'
+  _wpas_done_linkedin: '1'
+  _wpas_skip_twitter: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p><strong>Disclaimer:</strong> I am following the step by step guide from <a href="http://help.opscode.com">this </a>website.</p>
+<p>I was supposed to use Chef to automate the installation of NRPE plugins for Nagios monitoring in our HP environment. But, I gave up on that. This was because we have RedHat boxes but we dont have the RHN support. So, everytime I tried to upgrade or install anything, it was just a pain in the ass. It just wasn't worth wasting my time on it when they are so locked down.</p>
+<p>So, now I am going to do it from the scratch in our Amazon EC2 environment. Plus, Chef's knife CLI has inbuilt support for AWS so thats a good thing to have. Basically, I am going to be installing Chef on an EC2 instance which will be the box where I will be doing all my cooking and from where I will be uploading the cookbooks and recipes to the hosted chef server. This will be my workstation and not one of the chef-clients. I will be using this instance as a management node for all my chef client nodes. Once I am done with the basics, I will try to see how I can effectively use Chef to install Nagios for monitoring.</p>
+<p><strong>Workstation Setup: </strong></p>
+<ul>
+<li>I started the Basic Linux 64-bit AMI from the AWS console (ami-1b814f72).</li>
+<li>I then followed <a href="http://wiki.opscode.com/display/chef/Workstation+Setup+for+CentOS%2C+Red+Hat%2C+Fedora">these </a>instructions to configure the environment for my workstation.</li>
+<li>We need to install Ruby, RubyGems, Chef, Git and some other dependencies as mentioned in the above link.</li>
+<li>We need to then create a Chef repository on the workstation, clone the github chef-repo to that repository and upload the three files (USERNAME.pem, ORGANIZATION-validator.pem, knife.rb) to make sure we have the knife CLI working fine and talking to the hosted server.</li>
+<li>We are ready now to start cooking. Follow the instructions <a href="http://help.opscode.com/kb/start/3-working-with-cookbooks">here </a>to get started with the getting-started cookbook from the github repo. Finally, upload it to the Hosted Chef Server.</li>
+<li>You can now configure your workstation as a chef-client or another instance as a chef-client depending upon your requirements. Follow the instructions <a href="http://help.opscode.com/kb/start/4-setting-up-a-chef-client">here</a>. I am going to keep my workstation like this. I am going to have different instances treated as chef-clients by this workstation.</li>
+<li>For simplicity, I am going to start a new Ubuntu 11.04 instance on Amazon EC2 and I will have that configured as my chef-client via knife bootstrap command. I am following the above link as well as <a href="http://wiki.opscode.com/display/chef/Client+Bootstrap+Quick+Start">this </a>one.</li>
+<li>So, after starting the Ubuntu instance, I tried to run the knife bootstrap a few times and I kept on getting errors. Following is what I figured out:</li>
+</ul>
+<p>I was typing the following command from the ~/chef-repo directory and I kept on getting the following error:</p>
+<p>[ec2-user@ip-xxx chef-repo]$ knife bootstrap --distro ubuntu11.04-gems -N CL1 -x ubuntu --sudo -i Chef-WS.pem -V<br />
+Bootstrapping Chef on<br />
+ERROR: TypeError: can't convert Array into String</p>
+<p>I tried going inside the .chef directory and typing the above command again but that didn't work either.<br />
+Then, being in the .chef directory, I typed in the below command and got the following error:</p>
+<p>[ec2-user@xxx .chef]$ knife bootstrap -N CL1 -x ubuntu --sudo -i Chef-WS.pem -V<br />
+Bootstrapping Chef on<br />
+WARNING: Failed to connect to -- Net::SSH::AuthenticationFailed: ubuntu@</p>
+<p>So, as you can notice, as soon as I removed the "--distro" option, I got a different error which had something to do with SSH authentication. This was obvious and made sense because the private key Chef-WS.pem was in my chef-repo directory and not the current directory.</p>
+<p>So, I went back to the chef-repo directory and without the distro option, typed in the above command and bingo, IT WORKED!<br />
+[ec2-user@xxx chef-repo]$ knife bootstrap -N CL1 -x ubuntu --sudo -i Chef-WS.pem -V<br />
+Bootstrapping Chef on<br />
+0% [Working]</p>
+<p>The final output was as below:<br />
+INFO: *** Chef 0.10.4 ***<br />
+INFO: Client key /etc/chef/client.pem<br />
+INFO: Setting the run_list to [] from<br />
+INFO: Run List is []<br />
+INFO: Run List expands to []<br />
+INFO: Starting Chef Run for CL1<br />
+INFO: Loading cookbooks []<br />
+WARN: Node CL1 has an empty run list.<br />
+INFO: Chef Run complete in 0.776145 s<br />
+INFO: Running report handlers<br />
+INFO: Report handlers complete</p>
+<ul>
+<li>We can verify the new client node added from the workstation by following the steps in the above links.</li>
+</ul>
+<div>Next, I will continue with this and try to install recipes on this node from my workstation.</div>
+<div>P.S. -&gt; There is a nice knife-ec2 plugin by which you can start EC2 instances with Chef installed without worrying about he bootstrapping process but since I didn't want to start a new instance and I just wanted to install chef-client on an existing EC2 instance, I followed the above method. In the future, I will be doing it via the knife-ec2 CLI once I figure out our requirements.</div>

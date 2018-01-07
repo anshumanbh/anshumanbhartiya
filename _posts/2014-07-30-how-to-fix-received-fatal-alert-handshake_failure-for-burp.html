@@ -1,0 +1,49 @@
+---
+layout: post
+title: 'How to fix "Received fatal alert: handshake_failure" for Burp'
+date: 2014-07-30 17:33:24.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+- DevOps
+- Installation
+- Security
+tags:
+- burp
+- Handshake
+- SSL
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  geo_public: '0'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+  _wpas_skip_1005091: '1'
+  _wpas_skip_1005089: '1'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Phew! It took me around an hour to figure this mess out but I did and I am so glad I did. I just hope my post is helpful for anybody who might be facing similar issues when trying to proxy requests via Burp and eventually end up getting the damned "Received fatal alert: handshake_failure" error every time.</p>
+<p>I tried searching everywhere but none of the forums were helpful. So, I had to combine tit bits from different forums and a little bit of my brain to get this sorted out.</p>
+<p>The Burp forum here - http://forum.portswigger.net/thread/717/burp-ssh-tunnelling along with the error messages in the Alerts tab in Burp were helpful. Specially, the comment from a Burp developer in the above thread. But, they don't mention any details and leave it upto the users to figure it out. So, I will hopefully try to help those who are still stuck with this error.</p>
+<p>So, assuming you are trying to proxy requests to a website, and end up getting the "Received fatal alert: handshake_failure" error message, pay close attention to the error logs under the Alerts tab in Burp. You will notice a message saying "You have limited key lengths available. To use stronger keys, please download and install the JCE unlimited strength jurisdiction policy files, from Oracle."</p>
+<p>If you ignore that, you are going nowhere. So, lets get the stronger keys as mentioned in the above error message. But, before you do that, you need to first figure out the JRE version that is installed on your machine. I have a Macbook and the following command helped me determine the JRE version that was being used. This command can be found here - http://docs.oracle.com/javase/7/docs/webnotes/install/mac/mac-jre.html under "Determining the Installed Version of the JRE" section. The command is:</p>
+<p><strong>/Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java -version</strong></p>
+<p>I was running java version 1.7.0_60 which corresponds to JRE 7. The next step is to get the JCE unlimited strength jurisdiction policy files corresponding to the JRE version. So, I searched for "Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files 7 Download". Notice the 7 because I was running JRE 7. Depending on the JRE version  you are running, you will have to search for the appropriate JCE policy files. Download the zip file, unzip it. You will notice a folder with a bunch of files. The 2 files that we need are "US_export_policy.jar" and "local_policy.jar".</p>
+<p>Once, we have those files, navigate to <strong>/Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/security. </strong>You will notice that there are already these 2 files present in that directory. But, these are the old ones that we need to replace with the new ones that we just downloaded. So, to be safe, create backup of the old "US_export_policy.jar" and "local_policy.jar" files. And, replace them with the new ones.</p>
+<p>Voila! you should be done at this point. Fire up burp again and navigate to the website that was causing problems. You should be able to access it without any problems. You just replaced the older jar files with the newer ones with much stronger keys that would help in the SSL negotiation.</p>
+<p><strong>PS</strong> - Finding the damn folder to replace the jar files was the hardest part. There were tons of folders, at least in my case, where these jar files were located. But, replacing them didn't help. I had to find the right path and eventually, the docs.oracle.com link pasted above came to the rescue. There were a lot of threads about changing Java versions, running different Burp versions, etc. but none of them were helpful.</p>
+<p>&nbsp;</p>
+<h1></h1>
+<pre></pre>
+<p>&nbsp;</p>

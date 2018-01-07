@@ -1,0 +1,104 @@
+---
+layout: post
+title: Static Token used for authentication in the Slack iOS application
+date: 2015-03-11 23:18:58.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- AppSec
+- bug bounty
+- bugbounty
+- Security
+- Slack
+meta:
+  _edit_last: '28002546'
+  geo_public: '0'
+  _publicize_pending: '1'
+  _oembed_7fb1f982f3cc6649392b2f12ad00f002: "{{unknown}}"
+  _oembed_e997f77a77f23586bb03862d00d30f60: "{{unknown}}"
+  _oembed_a834bf6eca887b5786cfd7e684ae18b0: "{{unknown}}"
+  _oembed_983ba1967ddf832551e1df905ad8b582: "{{unknown}}"
+  _oembed_935fdf41db3f53f788567dceaec7ba50: "{{unknown}}"
+  _oembed_032e117e0f95f895e7a3fc9eccbb3572: "{{unknown}}"
+  _oembed_862d953eb148288d052c7c94b4749db6: "{{unknown}}"
+  _oembed_fe08a06cb3b54162239429958fd6a388: "{{unknown}}"
+  _oembed_7223a0da8bf3401122d40f72ac494e35: "{{unknown}}"
+  _oembed_6d4ac1179023b273f0b23eb8f55642b4: "{{unknown}}"
+  _oembed_0ae29bc0fd3d31faba6849ca2f07b2cc: "{{unknown}}"
+  _oembed_172778aec3184ef3938572e45f89ad6e: "{{unknown}}"
+  _oembed_50c9c5a00304cb8630c643541299b43e: "{{unknown}}"
+  _oembed_6deae089cc3368a37bb6a786c9cc39fd: "{{unknown}}"
+  _oembed_80f43b2289f6f0e77f64d51d8bfb4a58: "{{unknown}}"
+  _oembed_3daa651417332338a3182f42ca1ea767: "{{unknown}}"
+  _oembed_58d88cca1ab59b776d428ff622b546e1: "{{unknown}}"
+  _oembed_e0aa8a3a2aa80007d183eb485606b1c3: "{{unknown}}"
+  _oembed_480acc190186d2f79fb47b6c9c51521f: "{{unknown}}"
+  _oembed_40e4432a38b56946a4adcee2976a6c7b: "{{unknown}}"
+  _oembed_e026675d7ff52d087fdc55cf5954473b: "{{unknown}}"
+  _oembed_97fef43af1b66a565ac8ee898def72c2: "{{unknown}}"
+  _oembed_ce4ef231d5e62db8b2a1d0bc105433c3: "{{unknown}}"
+  _oembed_0b2974c9ea21bac96ab80c1f9b50f0c7: "{{unknown}}"
+  _oembed_29d9bb3b0b44d269e6a18f79908887e7: "{{unknown}}"
+  _oembed_f39bd3e23159cede22b1d056637e38f4: "{{unknown}}"
+  _oembed_27cf74dce8ed69f508e360c38b3a2461: "{{unknown}}"
+  _oembed_c738d7ecc28df1c19727f7895e107157: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>When I register for a Slack team from the Safari browser in my iPhone, the final request for registering a team looks like:</p>
+<p><a href="https://abhartiya.files.wordpress.com/2015/03/1.png"><img class="aligncenter size-full wp-image-224" src="{{ site.baseurl }}/assets/1.png" alt="1" width="497" height="110" /></a></p>
+<p>The response to this request is a redirect to the URL <code>https://slack.com/checkcookie?redir=https%3A%2F%2Fn00bgiri.slack.com%2F%3Ffresh</code> which is then redirected to <code>https://n00bgiri.slack.com/?fresh</code> which is then redirected to <code>https://n00bgiri.slack.com/app</code>. The series of these requests/responses can be seen below:</p>
+<p><a href="https://abhartiya.files.wordpress.com/2015/03/2.png"><img class="aligncenter size-full wp-image-225" src="{{ site.baseurl }}/assets/2.png" alt="2" width="497" height="272" /></a></p>
+<p>The final response for the request <code>https://n00bgiri.slack.com/app</code> looks like:</p>
+<p><a href="https://abhartiya.files.wordpress.com/2015/03/3.png"><img class="aligncenter size-full wp-image-226" src="{{ site.baseurl }}/assets/3.png" alt="3" width="497" height="882" /></a></p>
+<p>This screenshot is taken from the Safari browser in the iPhone.</p>
+<p>An important thing to notice here is the option "Open Slack". That is actually a hyperlink that looks like: <code>&lt;a href="slack://login/&lt;redacted&gt;/xoxo-&lt;redacted&gt;-&lt;redacted&gt;" class="btn btn-primary btn-large"&gt;Open Slack&lt;/a&gt;</code></p>
+<p>The value <strong><em>xoxo-&lt;redacted&gt;-&lt;redacted&gt;</em></strong> in the above URL is the keys to the kingdom. It can be essentially considered as a replacement for the username/password combination. It is a <strong><em>static</em></strong> value that does not change or get invalidated even if the account is logged out. This brings us to the <strong><em>first</em></strong> issue i.e. If an attacker gets hold of this value of a victim (by different attack vectors which is out of scope for the purposes of this discussion), he can essentially gain complete access of a victim's account perpetually. It does not matter if the victim is logged in or not since it is a static token and does not get invalidated on logout. Please note that the above value should not be confused with another token value that looks similar but is of the form <strong><em>xoxs-&lt;redacted&gt;-&lt;redacted&gt;-&lt;redacted&gt;-&lt;redacted&gt;</em></strong>. I will describe what this other value is in a moment. The <strong><em>xoxo</em></strong> value is only created/sent in the response once when the team is first registered so that's important to know here.</p>
+<p>Now, the normal authentication flow in the Slack iOS app is something like below:</p>
+<ul>
+<li>The first authentication request is sent to the URL <code>https://slack.com/api/auth.signin</code> with the POST parameters <code>email</code>, <code>password</code> and <code>team</code>.</li>
+<li>In response to the above request, the server assigns and sends a token (<strong><em>xoxs-&lt;redacted&gt;-&lt;redacted&gt;-&lt;redacted&gt;-&lt;redacted&gt;</em></strong>) in the JSON response.</li>
+<li>Then, a request is sent to the URL <code>https://slack.com/api/users.login</code> with the POST parameters <code>agent</code>,<code>set_active</code> and <code>token</code>. The token sent here is the <strong><em>xoxs</em></strong> token received above. This completes the authentication flow.</li>
+<li>The <strong><em>xoxs</em></strong> token is then used in all subsequent requests.</li>
+</ul>
+<p>Now, if you logout of the iOS application, this <strong><em>xoxs</em></strong> token gets invalidated (as it should be) but the static <strong><em>xoxo</em></strong> token discussed earlier does not. And, that's the problem.</p>
+<p>This brings me to the <strong><em>second</em></strong> attack aka Login CSRF:</p>
+<p>Normally, in a Login CSRF attack, an attacker tricks a victim to submit an authentication request with the username and password as parameters in the request. If there are no CSRF tokens present in this request, it becomes possible to trick victims to authenticate to an attacker controlled account.</p>
+<p>So, we now know that the <strong><em>xoxo</em></strong> token is a static token and can be treated as username/password. Therefore, the authentication request would look something like this:</p>
+<p><a href="https://abhartiya.files.wordpress.com/2015/03/screen-shot-2015-03-12-at-2-08-49-am.png"><img class="aligncenter size-full wp-image-227" src="{{ site.baseurl }}/assets/screen-shot-2015-03-12-at-2-08-49-am.png" alt="Screen Shot 2015-03-12 at 2.08.49 AM" width="497" height="238" /></a></p>
+<p>Notice there is nothing that can be considered as a CSRF token in the above request.</p>
+<p>I have created a video <a href="http://youtu.be/HXxmiHzqTM8" target="_blank"><strong><em>PoC</em></strong></a> for this attack as well.</p>
+<p>Exploiting the Login CSRF is extremely easy in this case.<br />
+What I essentially did was that as an attacker, I noted down the hyperlink that the server sent when I first registered my team: <code>slack://login/&lt;redacted&gt;/xoxo-&lt;redacted&gt;-&lt;redacted&gt;</code></p>
+<p>I, then sent, the victim an email with this link above as a hyperlink. When the victim clicks on that, the Slack iOS app opens up and sends the above authentication request automatically. I didn't even have to craft a HTML that sends a POST request to the <code>/api/users.login</code> endpoint. It was as simple as tricking the victim to click on a GET URL. The Slack app does all the leg work for the attackers.</p>
+<p>So, that's if folks. To summarize, I described 2 issues above:</p>
+<ol>
+<li>Static tokens that don't get invalidated</li>
+<li>Login CSRF</li>
+</ol>
+<p>&nbsp;</p>
+<p><strong><em>Remediation:</em></strong></p>
+<p>I am not an expert in iOS pentesting but I googled the correct way to handle iOS URL schemes and I saw these websites:</p>
+<ul>
+<li><code>http://software-security.sans.org/blog/2010/11/08/insecure-handling-url-schemes-apples-ios/</code></li>
+<li><code>http://stackoverflow.com/questions/5468945/how-secure-is-inter-app-communication-in-ios</code></li>
+</ul>
+<p>I think they are worth looking into. The premise is essentially that, you should be asking the victim user before opening up the <code>slack://</code> URL automatically in the Slack application to mitigate the Login CSRF issue.</p>
+<p>For the static token issue, I think it's a bad idea to associate static tokens with user accounts all together. So, that should be looked into as well and tried to get rid of. If not, I don't see any reason of sending that value in the response in clear text after registering.</p>
+<p>&nbsp;</p>
+<p><em><strong>Slack's Response:</strong></em></p>
+<p>Thanks for your extensive report. Both of these issues are already known and being fixed.</p>
+<p>1) The static tokens are something we are moving away from for all apps, including iOS. We hope to have this completed soon.<br />
+2) There is not much security implication of logging a user in this way. Because Slack groups are closed to the public, it would be difficult to convince the user they are in the correct group if you manage to log them in. We have an open bug to add CSRF to the login page,but this is low priority.</p>
+<p>&nbsp;</p>
+<p>Cheers!</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

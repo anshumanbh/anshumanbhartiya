@@ -1,0 +1,73 @@
+---
+layout: post
+title: Shopify Bug Bounty - 2 (contd. from the last one)
+date: 2013-10-28 20:58:34.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- bugbounty
+- Security
+- shopify
+- whitehat
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>I wrote a <a href="http://abhartiya.wordpress.com/2013/10/28/shopify-bug-bounty/">post</a> about my experience with the Shopify Bug Bounty program yesterday.</p>
+<p>Soon after that, folks from Shopify commented on that post saying that it is still reproducible and that they did not change anything in the code and that it is still not considered a valid finding.</p>
+<p>After further investigation, I tried to reproduce it again and was able to do so successfully. I realized what I was doing wrong and how I reproduced it in the first place. In the process of doing so, I realized a different attack vector which I hadn't thought of earlier. I still think this is an issue but the folks at Shopify don't seem to agree with me.</p>
+<p>So, this is what happens during the checkout process:</p>
+<p>1. When a customer (C) proceeds to checkout, he is asked to authenticate into the website. This is because the shop admin had the setting where only registered customers would be able to check out. The URL looks like this - http://&lt;myshop &gt;.myshopify.com/account/login/xxxxxxxxxxxx?checkout_url=https%3A%2F%2Fcheckout.shopify.com%2Fcarts%2F&lt;shop_id&gt;%2F&lt;cart_token&gt;</p>
+<p>&nbsp;</p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/10/screen-shot-2013-10-28-at-10-59-47-pm.png"><img class="aligncenter size-full wp-image-154" alt="Screen Shot 2013-10-28 at 10.59.47 PM" src="{{ site.baseurl }}/assets/screen-shot-2013-10-28-at-10-59-47-pm.png" width="497" height="291" /></a></p>
+<p>&nbsp;</p>
+<p>2. After authenticating, the cart_token or the cart_id gets associated with that customer (C) and the shop. The customer C is then redirected to the URL https://checkout.shopify.com/carts/&lt;shop_id&gt;/&lt;cart_token&gt;.  This is the key step. The customer has to authenticate to the shop at least once in order for this attack to work. As we will see from the steps below, this is trivial. The attacker doesn't have to trick a user to authenticate.</p>
+<p>&nbsp;</p>
+<p>3. After authenticating, lets assume that the customer decides that he does not want to shop anymore and he simply closes that browser. No matter how tech savvy this customer is, he is left with no choice but to close the browser because <em><strong>there is no logout option on that page.</strong></em><strong> </strong></p>
+<p>Attack Vector 1 - If the customer is shopping on a shared workstation, an attacker comes to that workstation, reopens the browser, looks through the browser history and navigates to the above URL. Boom, all the information is right there.</p>
+<p>Attack Vector 2 -  Since there is no session associated with this request, there are no session cookies either. All the attacker needs is the URL. And, he can navigate to it from a <em><strong>different computer</strong></em> all together and access the information.</p>
+<p>Once, the attacker navigates to the above URL, he is directly taken to the checkout page of the customer C where he can see the customer's email address (masked below) and his billing address. The attacker simply enters his shipping address and continues to next step.</p>
+<p>&nbsp;</p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/10/screen-shot-2013-10-28-at-11-06-14-pm.png"><img class="aligncenter size-full wp-image-156" alt="Screen Shot 2013-10-28 at 11.06.14 PM" src="{{ site.baseurl }}/assets/screen-shot-2013-10-28-at-11-06-14-pm.png" width="497" height="433" /></a></p>
+<p>&nbsp;</p>
+<p>4. On the next step, the attacker chooses one of the many options of payment. Since, he would not want to use his own credit card, he chooses Bank Deposit and Completes the purchase.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/10/screen-shot-2013-10-28-at-11-30-04-pm.png"><img class="aligncenter size-full wp-image-157" alt="Screen Shot 2013-10-28 at 11.30.04 PM" src="{{ site.baseurl }}/assets/screen-shot-2013-10-28-at-11-30-04-pm.png" width="497" height="406" /></a></p>
+<p>&nbsp;</p>
+<p>5. And, its done..</p>
+<p>&nbsp;</p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/10/screen-shot-2013-10-28-at-11-32-21-pm.png"><img class="aligncenter size-full wp-image-158" alt="Screen Shot 2013-10-28 at 11.32.21 PM" src="{{ site.baseurl }}/assets/screen-shot-2013-10-28-at-11-32-21-pm.png" width="497" height="361" /></a></p>
+<p>So, the attacker was able to successfully place an order to be shipped to his address without entering any credit card details.</p>
+<p>&nbsp;</p>
+<p><strong>Thoughts:</strong></p>
+<p>The folks at Shopify replied back with the following:</p>
+<p><em><strong>"First, this is no different from someone forgetting to log out of any other site, there's not much we can do here (it's the user's responsibility to protect their account, just like any other site). Secondly, keeping the person logged-in is not a bug, it's the expected behaviour. The purpose of logging in before placing an order isnot to store payment information, which greatly reduce the risk of forgetting to log out. An attacker who "find" an active session from another user would still have to pay for that order with a valid credit card which is what we really want to protect here (credit card information)."</strong></em></p>
+<p>&nbsp;</p>
+<p><em><strong>First, this is no different from someone forgetting to log out of any other site, there's not much we can do here (it's the user's responsibility to protect their account, just like any other site)</strong></em></p>
+<p>I am not sure how other e-commerce sites (eg Amazon) implement shopping carts but this one is definitely weird.</p>
+<p>Why isn't there a logout option on the checkout page once the customer is authenticated? As I mentioned earlier, even if the customer wants to logout, there is NO LOGOUT option on the checkout page. If there was this option and the customer still decides to close the browser, I can see what they are trying to say. But, providing this logout option on the checkout page can definitely help. On logging out, it can be used to disassociate the cart_token so that it cannot be used by the attacker in the future.</p>
+<p>&nbsp;</p>
+<p><em><strong>Secondly, keeping the person logged-in is not a bug, it's the expected behaviour. </strong></em></p>
+<p>I understand. But, does this mean that disclosing information like the email address and billing address of customers is also expected? I don't think this is the case with other e-commerce websites. Aren't we supposed to protect customer's privacy as much as we can?</p>
+<p>&nbsp;</p>
+<p><em><strong>The purpose of logging in before placing an order isnot to store payment information, which greatly reduce the risk of forgetting to log out. An attacker who "find" an active session from another user would still have to pay for that order with a valid credit card which is what we really want to protect here (credit card information)."</strong></em></p>
+<p>I just showed how its possible to place an order without entering any credit card information. The money order option can be chosen as well and it will result the same. Now, I dont know how the bank deposit and money order options are supposed to be setup in the admin console, but the attacker definitely does not require any of that information to place an order.  It is good in a way that the customer's credit card details are not populated like his email and billing address, but that doesn't mean that it reduces the risk.</p>
+<p>&nbsp;</p>
+<p>I would like to know what you guys think about this. I have spent a lot of time thinking this through. I haven't seen a lot of e-commerce websites out there so I am not sure if this is something that is acceptable or not.</p>
+<p>&nbsp;</p>
+<p>Thanks.</p>

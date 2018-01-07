@@ -1,0 +1,80 @@
+---
+layout: post
+title: Prezi Bug Bounty
+date: 2013-11-11 12:37:42.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- bugbounty
+- Prezi
+- Security
+- whitehat
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+  _oembed_a8453bad30307f2d43eeac247a78e441: "{{unknown}}"
+  _oembed_405a1fc89e212c11766c2279538f2e26: "{{unknown}}"
+  _oembed_56acef36a0bd113c5ac67544be9a7171: "{{unknown}}"
+  _oembed_0ed6ddb6d3cf874bfa15df95ddf8c447: "{{unknown}}"
+  _oembed_65ab6da5a57e07f7c132092fa422094b: "{{unknown}}"
+  _oembed_0f8972f32e6aa545ee81c5ed720a6e2d: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p><b>Vulnerability Reported: </b></p>
+<p><b>SSL Not Enforced for web service calls made from the Prezi Desktop application</b></p>
+<p>SSL is not enforced on some web service calls made between the Prezi Desktop application and the server.</p>
+<ul>
+<li>The authentication from the Prezi desktop application happens over HTTPS as expected.</li>
+</ul>
+<ul>
+<li>As soon as the user is authenticated, the server assigns a session cookie ‘prezi-auth’ and sets in the response header. An important point to note here is that there is no ‘Secure’ flag on this cookie. As per Prezi folks, they said the site is not fully functional over HTTPS as of now and hence there is no secure flag. This makes sense not implementing the secure flag. However, this introduces further risks as I will discuss below.</li>
+</ul>
+<ul>
+<li>Once the authentication is done, the Desktop application makes some web service calls over HTTPS. This can be verified by setting up a proxy and having the traffic from Internet Explorer go through the proxy. Now, since SSL is not being enforced here, by simply replacing the HTTPS with HTTP yielded valid responses. And, since the session cookie ‘prezi-auth’ did not have a secure flag, this was visible over HTTP.</li>
+</ul>
+<p>You may ask so what? Isn’t that how the system is designed? Isn’t it just the web service calls where you are just retrieving information (that might not be sensitive enough)? What can an attacker possibly do intercepting the HTTP traffic? All these are valid questions. And, yes till now, it is not that high of a risk.</p>
+<p>But, taking it one step further, if an attacker can intercept this traffic and capture the ‘prezi-auth’ session cookie, he could then use this value to impersonate the prezi user on the web application too. And, by doing that, the attacker has complete access to the prezi user’s account where he could update profile information, create prezi’s and do everything that a normal prezi user can.</p>
+<p>&nbsp;</p>
+<p><b>Summary:</b></p>
+<p>There is an option where you can implement HTTPS throughout the web application and once you do that, all the requests over HTTP are redirected to HTTPS. So, essentially, SSL is enforced on the web application but not on the Desktop application. And, because of this, by using the session cookie from the Desktop application, an attacker can potentially gain complete control of the prezi user’s web application account.</p>
+<p>Some web services where SSL was not being enforced:</p>
+<p><a href="http://prezi.com/api/token/objectlibraryservice/list/" target="_blank">http://prezi.com/api/token/objectlibraryservice/list/</a><br />
+<a href="http://prezi.com/backend/conversion/urlconv/desktop/" target="_blank">http://prezi.com/backend/conversion/urlconv/desktop/</a><br />
+<a href="http://prezi.com/backend/upload/token/desktop/" target="_blank">http://prezi.com/backend/upload/token/desktop/</a><br />
+<a href="http://prezi.com/api/token/objectlibraryservice/list/" target="_blank">http://prezi.com/api/token/objectlibraryservice/list/</a><br />
+<a href="http://prezi.com/api/token/themeservice/list/" target="_blank">http://prezi.com/api/token/themeservice/list/</a><br />
+<a href="http://themeservice.prezi.com/theme/user/" target="_blank">http://themeservice.prezi.com/theme/user/</a><br />
+<a href="http://objectlibrary.prezi.com/object/user/" target="_blank">http://objectlibrary.prezi.com/object/user/</a></p>
+<p>&nbsp;</p>
+<p><b>Attack Scenario:</b></p>
+<p>1. A prezi user opens the Desktop application and logs in. He is assigned a "prezi-auth" session cookie by the server. This is over HTTPS which is fine. Also assume that an attacker is eavesdropping on this network and can see any requests/responses being transmitted over HTTP.</p>
+<p>2. Attacker sends an email to the prezi user with a link which auto-submits a POST request on the user's behalf to the URL <a href="http://prezi.com/api/token/objectlibraryservice/list/" target="_blank">http://prezi.com/api/token/objectlibraryservice/list/</a>. Note that this is meant to be over HTTPS but the attacker is making the user go to the HTTP link. Since, SSL is not enforced, this request will be successfully processed by the server.</p>
+<p><b>NOTE</b>: You can consider this like a CSRF attack or tricking the user in order to click a link and send a request to the server over HTTP. I am sure there can be other avenues where a user can be tricked to do this. It doesn't have to be a CSRF attack vector. I am considering CSRF here just for the sake of it and a PoC. Also notice that there are no CSRF tokens present either in the header or in the POST body of this request which makes it even easier.</p>
+<p>3. Now, the attacker eavesdropping sees this request over HTTP and he can capture the "prezi-auth" session cookie. This cookie should really have the Secure flag to avoid this but since it does not have the secure flag, this value will be transmitted over HTTP since the user is logged in his Prezi account.</p>
+<p>4. The attacker can then use the captured prezi-auth session cookie and impersonate the user in the web application.</p>
+<p>&nbsp;</p>
+<p><b>Screenshots:</b></p>
+<p><a href="http://abhartiya.files.wordpress.com/2013/11/ssl-not-enforced-on-webservices.png"><img class="aligncenter size-full wp-image-165" alt="ssl not enforced on webservices" src="{{ site.baseurl }}/assets/ssl-not-enforced-on-webservices.png" width="497" height="248" /></a></p>
+<p>&nbsp;</p>
+<p align="center">A valid response is received when a request is sent over HTTP. Notice that I had the SSL option enabled in the website.</p>
+<p align="center">
+<p align="center"><a href="http://abhartiya.files.wordpress.com/2013/11/impersonating-the-user.png"><img class="aligncenter size-full wp-image-166" alt="impersonating the user" src="{{ site.baseurl }}/assets/impersonating-the-user.png" width="497" height="406" /></a></p>
+<p align="center">
+<p align="center">Sending a request to the web application at the URL /settings/ with just the captured ‘prezi-auth’ session cookie yielded the profile page of the prezi user account</p>
+<p align="center">
+<p><b>Prezi’s Response:</b></p>
+<p>They said it was a nice finding but since the site is not fully over HTTPS, they cannot give me a bounty. But, they will send me some swag. I agree with them and it is up to their discretion to judge this. I am happy with the token of appreciation in form of tshirt, sunglasses, etc. Something is better than nothing.</p>
+<p>&nbsp;</p>

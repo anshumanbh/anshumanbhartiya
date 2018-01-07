@@ -1,0 +1,90 @@
+---
+layout: post
+title: Performing Code Review on Shell Scripts
+date: 2013-09-26 08:06:59.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- Code Review
+- Security
+- Shell Script
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+  _wpas_skip_1005091: '1'
+  _wpas_skip_1005089: '1'
+  _oembed_af9305eb3aad1645d99df54e9e76c871: "{{unknown}}"
+  _oembed_e7d65ec53868c987c468474440b13fb9: "{{unknown}}"
+  _oembed_986f000d62ab9dca72a6b931ab6af67e: "{{unknown}}"
+  _oembed_39e331aea09dc3795297bb4f780404a9: "{{unknown}}"
+  _oembed_92f4fc54b0667f138acab936e6fcdce4: "{{unknown}}"
+  _oembed_8ba79f5ab28271c8cb2c9e3e61508a7c: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<ul>
+<li>Check if the scripts are using absolute or relative paths. Using absolute paths wherever possible is recommended as a good practice.</li>
+</ul>
+<ul>
+<li>Check all input/output. This is probably the most common thing to look for even in shell scripts. It is recommended to take the input in double quotes eg. If ["$FOO" = "foo"].</li>
+</ul>
+<ul>
+<li>Check to make sure passwords, keys and other secrets are not present as environment variables or hardcoded in scripts. Search/grep for keywords. Some of the keywords to look for are given below.</li>
+</ul>
+<ul>
+<li>Check to see if any secret data is being passed in an external command's arguments. It is recommended to pass such data via a pipe or redirection instead.</li>
+</ul>
+<ul>
+<li>Check to make sure $PATH is always set carefully. PATH inherited from the caller should not be trusted, specially if the script is running as root. In fact, whenever an environment variable inherited from the caller is used, think about what could happen if the caller put something misleading in the variable, e.g., if the caller set $HOME to/etc.</li>
+</ul>
+<ul>
+<li>If one of the major usecases is "user logs in via SSH, and executes a script via sudo" think about using SSH command restriction instead. That way users don't get a shell on the target system at all, they can just execute that one command remotely.</li>
+</ul>
+<ul>
+<li>Check for Ownership, execution and permissions issues. Does the script contain info that others shouldn't be able to view? If so, make sure it's only readable by the owner. Check if the scripts have permissions to be executed by anybody or just by the owner of the script.</li>
+</ul>
+<p>• chmod 0700 is a good option • chmod u+x scriptname - executable bit is set for the user who owns the script only</p>
+<ul>
+<li>Be wary of symbolic links. These might need to be explored more.</li>
+</ul>
+<ul>
+<li>Temporary File Attack - look for secret data or anything sensitive being written to a fixed temp file. Writing anything sensitive to temporary files is never a good idea. Specially, when these files are generated with a fixed syntax i.e. test.tmp</li>
+</ul>
+<ul>
+<li>Input File Attack - see if contents from an input file (fixed path) is being sent over a different machine using "nc" or something like it. The input file can be manipulated and sensitive data can be made to sent to the attacker instead.</li>
+</ul>
+<ul>
+<li>Authentication Attacks - see if they are using standard variables like UID, USER and HOME to authenticate. These values can often be set and is not the right way to retrieve the user values.</li>
+</ul>
+<p><strong>References:</strong></p>
+<ul>
+<li><a href="http://tldp.org/LDP/abs/html/securityissues.html" rel="nofollow">http://tldp.org/LDP/abs/html/securityissues.html</a></li>
+<li><a href="https://bbs.archlinux.org/viewtopic.php?pid=1235117" rel="nofollow">https://bbs.archlinux.org/viewtopic.php?pid=1235117</a></li>
+<li><a href="http://stackoverflow.com/questions/8935162/shell-scripts-and-security" rel="nofollow">http://stackoverflow.com/questions/8935162/shell-scripts-and-security</a></li>
+<li><a href="http://searchenterpriselinux.techtarget.com/tip/Seven-tips-for-optimizing-shell-script-security" rel="nofollow">http://searchenterpriselinux.techtarget.com/tip/Seven-tips-for-optimizing-shell-script-security</a></li>
+<li><a href="https://code.google.com/p/shcov/" rel="nofollow">https://code.google.com/p/shcov/</a></li>
+<li><a href="https://developer.apple.com/library/mac/documentation/OpenSource/Conceptual/ShellScripting/ShellScriptSecurity/ShellScriptSecurity.html#//apple_ref/doc/uid/TP40004268-CH8" rel="nofollow">https://developer.apple.com/library/mac/documentation/OpenSource/Conceptual/ShellScripting/ShellScriptSecurity/ShellScriptSecurity.html#//apple_ref/doc/uid/TP40004268-CH8</a></li>
+</ul>
+<p><strong>Keywords:</strong></p>
+<ul>
+<li>password</li>
+<li>log</li>
+<li>chmod</li>
+<li>sudo</li>
+<li>UID</li>
+<li>USER</li>
+<li>HOME</li>
+<li>PATH</li>
+<li>Eval</li>
+<li>CLASSPATH</li>
+</ul>

@@ -1,0 +1,38 @@
+---
+layout: post
+title: Account Hijacking in Indeed
+date: 2015-04-15 20:12:00.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Security
+tags:
+- AppSec
+- bug bounty
+- bugbounty
+meta:
+  _publicize_pending: '1'
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  enclosure: |
+    https://www.dropbox.com/s/blrguja2qyc0oqw/Video%20Jan%2027%2C%2012%2054%2025%20AM.mov?dl=0
+    0
+    video/quicktime
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Authenticating to an account on the Indeed iPhone app and then changing the country triggers the user to logout (at least it appears to log out a user). The country changes just fine but instead of the user still being logged in, the "Sign In" option appears in the application. When the user clicks on this "Sign In" option, a set of requests are sent to the server which automatically logs the user back in (obviously because the user never logged out in the first place. The user just changed the country).</p>
+<p>Within these URLs that are sent out, there is one particular request that gets sent to the "/account/checklogin" endpoint with the value "passrx" over HTTP. What this means is that a MiTM attacker can easily retrieve this URL over the network.</p>
+<p>The attacker can then use the captured URL to take over the victim's account completely.</p>
+<p>It should also be noted that this is not only an account hijacking vulnerability but also a login CSRF vulnerability. An attacker can easily capture the above request for his own account and then trick a victim to login that account.</p>
+<p>But, as it is obvious, the more serious vulnerability here is the account hijacking vulnerability by a MiTM attacker.</p>
+<p>A PoC video demonstrating the vulnerability is <a href="https://www.dropbox.com/s/blrguja2qyc0oqw/Video%20Jan%2027%2C%2012%2054%2025%20AM.mov?dl=0">here</a>.</p>
+<p>This vulnerability was reported via Bugcrowd to the Indeed bug bounty program and this issue was deemed as a duplicate. I then got explicit permission from the program owners to disclose this publicly.</p>
+<p>Cheers!</p>

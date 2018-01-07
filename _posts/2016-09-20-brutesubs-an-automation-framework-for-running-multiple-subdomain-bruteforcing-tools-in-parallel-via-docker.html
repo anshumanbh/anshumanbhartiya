@@ -1,0 +1,110 @@
+---
+layout: post
+title: Brutesubs - An automation framework for running multiple subdomain bruteforcing
+  tools in parallel via Docker
+date: 2016-09-20 17:23:55.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Database
+- DevOps
+tags:
+- AppSec
+- bugbounty
+- Security
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '27038613497'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>EDIT: I made some changes in the code (added ALTDNS in the mixture as well) and the blogpost (removed the end part where I described the approach and moved that to the github repo) after the first release. The overall idea of why this framework is still here and applicable. Everything else around the working of the framework has been migrated to the github page now - <a href="https://github.com/anshumanbh/brutesubs" target="_blank">https://github.com/anshumanbh/brutesubs</a>. Moving on, this blog won't be updated with the new features in the framework. I will push all the updates directly on the Github repo.</p>
+<p><!--more--></p>
+<p>If you don't have the time to read the entire post, TL;DR is:</p>
+<blockquote><p>We want to optimize running different subdomain bruteforcing tools in parallel (example - Enumall, Gobuster and Sublist3r) and use the most comprehensive uniquely sorted and merged wordlist to bruteforce against in an automated fashion such that all we need to do is run one command providing the target and the end result should be a uniquely sorted and merged list of valid bruteforced subdomains of that target. Once we have that, we can then run alt-dns to permutate different combinations of those subdomains to see if we can find more.</p></blockquote>
+<p><!--more--></p>
+<p>Over the years of bug bounty hunting, I have seen a number of subdomain bruteforcing tools being open sourced by some smart talented people. The ones I looked at are:</p>
+<blockquote><p>Sublist3r - <a href="https://github.com/aboul3la/Sublist3r" target="_blank">https://github.com/aboul3la/Sublist3r</a></p>
+<p>Enumall - <a href="https://github.com/jhaddix/domain" target="_blank">https://github.com/jhaddix/domain</a></p>
+<p>Gobuster - <a href="https://github.com/OJ/gobuster" target="_blank">https://github.com/OJ/gobuster</a></p>
+<p>DNSCAN - <a href="https://github.com/rbsec/dnscan" target="_blank">https://github.com/rbsec/dnscan</a></p>
+<p>DNSRECON - <a href="https://github.com/darkoperator/dnsrecon" target="_blank">https://github.com/darkoperator/dnsrecon</a></p>
+<p>NMAP's dns-brute - <a href="https://nmap.org/nsedoc/scripts/dns-brute.html" target="_blank">https://nmap.org/nsedoc/scripts/dns-brute.html</a></p>
+<p>Censys API - <a href="https://censys.io/api" target="_blank">https://censys.io/api</a>. I wrote a quick and dirty script to use this API if anyone is interested. You can find it here - <a href="https://gist.github.com/anshumanbh/96a0b81dfe318e9e956013209e178fa9" target="_blank">https://gist.github.com/anshumanbh/96a0b81dfe318e9e956013209e178fa9</a></p></blockquote>
+<p>All of them work pretty good however I noticed that the results I am getting (when I use the same wordlist) with these tools were inconsistent. And, I didn't want to reinvent the wheel and write yet another tool because that's the last thing I wanted to do with my time right now.</p>
+<p>I am no DNS expert and I didn't want to dig into the codebase of these tools, so if you ask me the reason behind these inconsistencies, unfortunately I don't have a solid answer. I will say that most of the inconsistencies I noticed were around following redirects. Apart from that, the other subdomains that were missed (that didn't have anything to do with following redirects) were not a lot so if you are okay with running just 1 tool and you don't mind missing out on a few subdomains here and there, go ahead and run your favorite tool.</p>
+<p>But, for me personally, the above problem presented the following options:</p>
+<ul>
+<li>
+<blockquote><p>Manually run all the tools separately, combine the output in the end to get the overall result. The most laborious stupid way.</p></blockquote>
+</li>
+<li>
+<blockquote><p>Automate running all the tools either one after the other or in parallel (preferred), then combine the output in the end to get the overall result. Still an improvement where you get rid of the manual work but takes a long time to finish since we are running all the tools like a monkey.</p></blockquote>
+</li>
+<li>
+<blockquote><p>Automate running only specific tools that are known to be reliable and that don't produce false negatives. False positives are easy to deal with but false negatives are what I didn't want. This was my preferred way of doing it because we are still automating (in parallel of course) and not doing any manual work but even the automation is smarter than the previous method and it gets done much much faster. I ran all the tools above against a target domain and compared how they did to be able to choose the specific ones that I want to run. The results are listed later in the blog.</p></blockquote>
+</li>
+</ul>
+<p class="p1">I compared Enumall with all other tools because I got the most results from Enumall. Also, the Enumall script I used was a custom script based off Jason's script. You can find it here - <a href="https://github.com/anshumanbh/domain/blob/master/enumall.py" target="_blank">https://github.com/anshumanbh/domain/blob/master/enumall.py</a>. Jason's script is here - <a href="https://github.com/jhaddix/domain/blob/master/enumall.py" target="_blank">https://github.com/jhaddix/domain/blob/master/enumall.py</a></p>
+<p class="p1">The main differences between Jason's script and mine are:</p>
+<ul>
+<li class="p1">You will notice that I am not running Alt-DNS (<a href="https://github.com/infosec-au/altdns" target="_blank">https://github.com/infosec-au/altdns</a>) YET. Once, I have the final sorted list of all the subdomains, I would run it then.</li>
+<li class="p1">The modules Jason uses are:
+<ul>
+<li class="p1">recon/domains-hosts/bing_domain_web</li>
+<li class="p1">recon/domains-hosts/google_site_web</li>
+<li class="p1">recon/domains-hosts/netcraft</li>
+<li class="p1">recon/domains-hosts/shodan_hostname</li>
+<li class="p1">recon/netblocks-companies/whois_orgs</li>
+<li class="p1">recon/hosts-hosts/resolve</li>
+</ul>
+</li>
+<li>The modules I use are:
+<ul>
+<li>recon/domains-hosts/threatcrowd</li>
+<li>recon/domains-hosts/hackertarget</li>
+<li>recon/domains-hosts/bing_domain_web</li>
+<li>recon/domains-hosts/google_site_web</li>
+<li>recon/domains-hosts/netcraft</li>
+<li>recon/domains-hosts/shodan_hostname</li>
+<li>recon/domains-hosts/google_site_api</li>
+</ul>
+</li>
+<li>I retrieve the Shodan API keys (shodan_api) and the Google API keys (google_api and google_cse) from the environment variables so make sure you have those set if you want to run those modules properly. Otherwise, they won't produce any results. I think Jason's script assumes that you already have those keys setup in recon-ng. Not sure about that?</li>
+<li>I am sending the results in a file whose location is also being retrieved from the environment variable (enumallfile).</li>
+<li>The reason I am retrieving these variables from the environment variables will be clear later when I describe how I automate running Enumall using Docker.</li>
+</ul>
+<p>Now, let's get back to the comparison.</p>
+<p class="p1"><strong>COMPARISON RESULTS:</strong></p>
+<blockquote>
+<p class="p1"><strong>Enumall vs DNSRECON</strong> with the same wordlist - Enumall wins..reported a few valid domains more than dnsrecon</p>
+<p class="p1"><strong>Enumall vs Gobuster</strong> with the same wordlist - Enumall wins..reported a few valid domains more than Gobuster even though Gobuster ran way faster. I did observe some inconsistencies with GoBuster as well where providing different number of threads produced different output with the same wordlist. Having said that, I really like Gobuster and I will explain how we can use this a bit later</p>
+<p class="p1"><strong>Enumall vs Censys</strong> - no comparison. Enumall wins hands down. Censys is not a tool per say. Just an API you can query. But, even doing that reported some false old domains that weren’t active. Needless to say, there is no concept of brute forcing subdomains via Censys</p>
+<p class="p1"><strong>Enumall vs NMAP's dns-brute</strong> - no comparison. Enumall wins hands down again. Enumall reported a lot of valid subdomains that NMAP didn’t</p>
+<p class="p1"><strong>Enumall vs DNSCAN</strong> - I ran both with the same wordlist. DNSCAN missed out a few subdomains that enumall didn’t (mostly redirects). So, Enumall wins again even though DNSCAN finished running in way less time than Enumall. DNSCAN is similar to Gobuster but Gobuster is much faster so I’d rather run Gobuster for reasons mentioned above and chuck DNSCAN all together</p>
+<p class="p1"><strong>Enumall vs Sublist3r</strong> - Things got interesting here. Sublist3r was run without the brute forcing enabled because it doesn’t work for me for some reason. Ahmed, who wrote Sublist3r is aware of it but I am not sure when that's going to be fixed. It just hangs forever for me as soon as the bruteforcing starts. It is an awesome tool nevertheless. Enumall reported a lot of domains not reported by Sublist3r obviously because we didn’t have brute forcing enabled with Sublist3r. Sublist3r, however reported a few domains that no longer existed (false positives).<span class="Apple-converted-space">  But</span>, Sublist3r also reported some domains that existed but wasn’t reported by Enumall (Ouch! False Negatives). Like I mentioned above, having FPs is okay but having FNs are bad.</p>
+</blockquote>
+<p class="p1">So, there you have it. Clearly, the specific tools that I would want to run are Enumall (the overall winner), Gobuster (for getting some results to work with fast) and Sublist3r (to catch the subdomains missed by Enumall and Gobuster. Also to get a list fast since bruteforcing is not enabled)</p>
+<p class="p1">If you don't want to run all of them and if you are happy just running 1 tool, I would highly recommend running Enumall written by a good friend and an awesome person Jason Haddix. Enumall, by far, produced the most relevant and accurate results even though it ran really slow, had a few False Positives and took a lot of time. But, then again, if you have a shorter wordlist, that won't be an issue. This brings me to the next topic of discussion which is <em><strong>wordlists</strong></em>.</p>
+<p>I am sure everyone understands the importance of using a good wordlist to be able to bruteforce subdomains or anything for that matter. One such tool that I have always had my eye on and I thought was pretty well thought is CeWL by digininja. You can find it here - <a href="https://digi.ninja/projects/cewl.php" target="_blank">https://digi.ninja/projects/cewl.php</a>. It basically generates a custom wordlist based on the target. So, it is possible there are a certain keywords that only the target uses and have subdomains based off of that keyword and that keyword cannot be found in any other wordlists. So, if you catch hold of that, you are golden. If you miss it, you would never be able to bruteforce such subdomains.</p>
+<p>Then there is the SecLists project by Daniel Miessler - <a href="https://github.com/danielmiessler/SecLists" target="_blank">https://github.com/danielmiessler/SecLists</a>. This project has some pretty good wordlists as well:</p>
+<ul>
+<li>SecLists/Discovery/DNS/deepmagic.com_top500prefixes.txt</li>
+<li>SecLists/Discovery/DNS/fierce_hostlist.txt</li>
+<li>SecLists/Discovery/DNS/namelist.txt</li>
+<li>SecLists/Discovery/DNS/sorted_knock_dnsrecon_fierce_recon-ng.txt</li>
+<li>SecLists/Discovery/DNS/subdomains-top1mil-110000.txt</li>
+</ul>
+<p>We also have a pretty good wordlist from Sublist3r's subbrute directory here - <a href="https://github.com/aboul3la/Sublist3r/blob/master/subbrute/names.txt" target="_blank">https://github.com/aboul3la/Sublist3r/blob/master/subbrute/names.txt</a></p>
+<p>Last, but not the least, we have the wordlist generated by bitquark based on his experiment here - <a href="https://github.com/bitquark/dnspop/blob/master/results/bitquark_20160227_subdomains_popular_1000000" target="_blank">https://github.com/bitquark/dnspop/blob/master/results/bitquark_20160227_subdomains_popular_1000000</a></p>
+<p>So, I basically combined all these wordlists together (1 generated from CeWL, 5 from Seclists, 1 from Sublist3r and 1 from dnspop), uniquely sorted and merged them all together to create one big wordlist to bruteforce against. I feel pretty confident the final merged wordlist would cover almost all the subdomains if not 100%.</p>
+<p>If you want to add more, you can always do that as well :) But, combining all of the above will result in approx. 1 million words to bruteforce against. That's a LOT!</p>
+<p>Please head to my github <a href="https://github.com/anshumanbh/brutesubs" target="_blank">repo</a> for more details and all the fun code behind this orchestration :)</p>

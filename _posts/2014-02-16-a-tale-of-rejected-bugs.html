@@ -1,0 +1,47 @@
+---
+layout: post
+title: A Tale of Rejected Bugs
+date: 2014-02-16 05:23:04.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- AppSec
+- bugbounty
+- Coindrawer
+- ManageWP
+- Security
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>With the inception of bug bounty programs, anybody with some knowledge of application security i.e. basic understanding of common web vulnerabilities like Cross-Site Scripting, Cross-Site Request Forgery, etc. could pretty much find bugs in any website out there and while doing so, make some $$$. I mean, if I tell my mom to enter &lt;script&gt;alert(1)&lt;/script&gt; in every input box out there and see if she gets a pop-up or not, even she can do it without understanding what she is doing. That's how bad security was (it still is but is definitely improving) maybe a couple of years ago.I actually started participating in some of these programs quite late (sometime in 2013) so my experience with bug bounty programs has been slightly different. By that time, people were already listed in multiple Hall of Fames.</p>
+<p>Needless to say, it is not the same anymore. I have realized that it can actually be quite time consuming. And, if you already have a full time job like me, then bug bounty hunting is like a new job all together. Having said that, there has suddenly been an influx of bug hunters in the InfoSec industry these days. People have been claiming themselves as "security researchers" aka "hackers" on their blogs, twitter, linkedin. They have Hall of Fame acknowledgements as Honors &amp; Rewards in their LinkedIn profiles. I think it is getting a bit too much now. I can understand having the HoF listed in Bugcrowd's profile page, tweeting about a bug discovered and the amount of bounty received for it but listing 20 HoF acknowledgements on LinkedIn? Are you kidding me? Oh and by the way, do you really think you are a "security researcher" just because you have discovered CSRF's in 20 different websites? I just don't get it. Anyways, this was a rant I had been wanting to do since a long time and I will stop here.</p>
+<p>Getting back to the topic of the blog, these bug bounty programs, obviously come with their fair share of either duplicates or rejected bugs. I will try to cover some of the rejected bugs I have had recently.</p>
+<p><strong>Session Not Invalidated On Logout</strong></p>
+<p>This was a shocker to me when Coindrawer rejected this. I was actually surprised it even existed in the first place because I'd have thought somebody must have already reported it considering that they have been live for quite some time now. I am not going to elaborate what the vulnerability is and how it can be exploited and such but it is a pretty well known vulnerability. Every time I have reported it, it has actually been accepted and fixed because it is indeed a security vulnerability and presents considerable risk. This is what they had to say about it:</p>
+<blockquote><p>Hi Anshuman,</p>
+<p>We currently don't consider this to be a threat.</p>
+<p>Thank you for your submission. We are constantly making improvements<br />
+to our site and invite you to continue to test its security.</p></blockquote>
+<p>I don't know what to say to this. If they are really making improvements to their site, they would fix this damn thing and not just send me an email template.</p>
+<p>&nbsp;</p>
+<p><strong>Information Leakage </strong></p>
+<p>In the ManageWP website, when you change your password, an AJAX GET request is sent to the server with the new password value as a query parameter.  Now, unlike a normal HTTP GET request, since this is an AJAX request, I do understand the argument that it is not going to be stored in browser's history or log files. However, I have not seen this before. And, I strongly believe that sensitive information like passwords should not be sent as query parameters in a GET request. Again, no comments on this one.</p>
+<p><a href="http://abhartiya.files.wordpress.com/2014/02/screen-shot-2014-01-25-at-1-40-35-am.png"><img class="aligncenter size-full wp-image-173" alt="Screen Shot 2014-01-25 at 1.40.35 AM" src="{{ site.baseurl }}/assets/screen-shot-2014-01-25-at-1-40-35-am.png" width="497" height="98" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>I wanted to mention a couple of more bugs but I will save it for the next post!</p>

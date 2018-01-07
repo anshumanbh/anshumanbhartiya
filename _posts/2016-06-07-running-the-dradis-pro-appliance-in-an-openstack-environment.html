@@ -1,0 +1,64 @@
+---
+layout: post
+title: Running the Dradis Pro Appliance in an OpenStack environment
+date: 2016-06-07 14:14:49.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Configuration
+tags:
+- AppSec
+- Dradis
+- Installation
+- OpenStack
+- Reporting
+- Security
+meta:
+  _oembed_10ab72726aaa97c45a4f8b21f3c4d2e2: "{{unknown}}"
+  _rest_api_published: '1'
+  _oembed_221db68b22f8cf9ffbe96c3d1b8b55cc: "{{unknown}}"
+  _oembed_226cf20385a603da642851ae9652a4af: "{{unknown}}"
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '23611154363'
+  _oembed_0f07121b7a0c2ced42c5dd02f9c133c8: "{{unknown}}"
+  _oembed_9925e996d7a469da9b1963d57ce9babd: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>We use OpenStack as our lab IaaS and We use Dradis Pro for report generation and general note keeping. Prior to moving our entire lab in the OpenStack environment, we had deployed our Dradis Pro appliance in a VMWare environment which is what it <a href="http://securityroots.com/dradispro/support/faq.html">supports</a>, so that was no problem. But, now since we were moving everything into OpenStack, we had to migrate the Dradis appliance as well.</p>
+<p>But, apparently nobody has tried installing Dradis Pro appliance in their OpenStack environment so I couldn't really find anything online or in their forums/guides about it so I decided to give it a shot. Surprisingly, it was really easy.</p>
+<ul>
+<li>The first step is to download the .ova file from your Dradis pro account at portal.securityroots.com.</li>
+<li>You have to then tar the .ova file<br />
+<blockquote><p>tar xvf dradis-professional-x86_64-20151122.ova</p></blockquote>
+</li>
+<li>This generates a .vmdk and .ovf file. Ignore the .ovf file and convert the .vmdk file into a qcow2 formatted .img file. Install the qemu-img utility if you don't have it already.<br />
+<blockquote>
+<p class="p1"><span class="s1">qemu-img convert -O qcow2 dradis-professional-x86_64-20140331-disk1.vmdk dradis-appliance.img</span></p>
+</blockquote>
+</li>
+<li>At this point, you are pretty much done creating the image. You just have to upload this .img file to your OpenStack environment using the Glance API<br />
+<blockquote>
+<p class="p1"><span class="s1">glance image-create --name='dradis-appliance' --container-format=bare --disk-format=qcow2 &lt; dradis-appliance.img</span></p>
+</blockquote>
+<p>PS - The above step is not as trivial as I made it seem like. You would need to have your OpenStack environment variables set to those values that are required to connect to your OpenStack environment. You would also need the glance API installed. But, I am assuming you have already done all the leg work since this blog is not about connecting to your OpenStack environment.</li>
+<li>The above glance image-create command might take some time depending upon how big the .img file is and how fast/slow your connection is. But, once it's done, you should see the details of the image uploaded to your OpenStack environment.</li>
+<li>So, now you have a valid image in your OpenStack lab and are ready to launch an instance from that image. I chose a m1.medium flavor (2 VCPUs, 80 GB root disk, 8192 MB RAM). Choose your access security groups and key pairs accordingly. Launch the instance.</li>
+<li>Wait for a while. You should then see the console of this instance with "Enter the passphrase: ". Enter the default passphrase which you can find in your account at portal.securityroots.com</li>
+<li>Login as root and default credentials.</li>
+<li>At this point, if you try navigating to https://&lt;dradis-IP&gt;/setup/upgrade, you might not see what you are expecting to see. So, in order to troubleshoot more, please follow <a href="http://securityroots.com/dradispro/support/guides/troubleshooting/instance_down.html">this</a> guide. I had to do this as well where I had to restart the god service after logging in the console before I could get to the dradis UI in the browser.<br />
+<blockquote><p>sudo /etc/init.d/god restart</p></blockquote>
+</li>
+<li>At this point, you should be all set to complete the remaining steps from the guide <a href="http://securityroots.com/dradispro/support/guides/deployment/apply_dup.html">here</a>.</li>
+</ul>
+<p>PS - Don't forget to change the default passphrase, login credentials, etc.</p>
+<p>Reference:</p>
+<p>http://vxpertise.net/2014/08/loading-vmware-appliances-into-openstack/</p>
+<p>&nbsp;</p>

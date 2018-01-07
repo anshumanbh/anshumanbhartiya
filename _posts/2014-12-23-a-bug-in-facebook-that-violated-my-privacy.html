@@ -1,0 +1,36 @@
+---
+layout: post
+title: A bug in Facebook that violated my privacy
+date: 2014-12-23 21:24:28.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- bug bounty
+- bugbounty
+- privacy
+- Security
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  geo_public: '0'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>The bug that I am going to describe here was actually discovered accidentally while I was checking my privacy settings in Facebook. And, it is so simple that one doesn't need to be technical at all to find it. It could have been discovered by anybody (literally). I guess I just got lucky and the fact that I have been a Facebook user since 2007 aided in the discovery as well. But, the bottom line is that you just need to be looking at the right place at the right time to earn bounties from the various bug bounty programs out there.</p>
+<p>Anyways, let's get to the bug now.</p>
+<p><strong>Privacy Violation Bug#1</strong></p>
+<p>This bug allowed disclosure of "parents" information (to the public) of some Facebook users inspite of the privacy settings being explicitly set to not allow that information to be viewed by the public or friends. I believe this affected certain Facebook users and not all. Specially, those that have been Facebook users around 2007 or so.</p>
+<p>I've had my Facebook account since 2007 and I believe Mark Zuckerberg did too :)</p>
+<p>Both, Zuk and I were affected because of this. I am sure there were others affected as well.</p>
+<p>I'll let you watch this video <a href="http://youtu.be/UFd68EG3E98" target="_blank" rel="nofollow nofollow">http://youtu.be/UFd68EG3E98</a> to show this in action.</p>
+<p>It was as simple as clicking a hyperlink for the "BORN" highlight on your timeline. That would take you to a page that looks something like <a href="https://www.facebook.com/510360103/posts/10154387594100104/" rel="nofollow">https://www.facebook.com/&lt;user-id&gt;/posts/&lt;post-id&gt;/</a>. And, you would see yourself tagged with your parents.</p>
+<p>This bug was worth $5000.  I think this is a pretty generous amount for this bug. But, I am sure they rewarded this considering the ease of how this information could be leaked and the privacy violation for a lot of Facebook users.</p>
+<p>Cheers!</p>

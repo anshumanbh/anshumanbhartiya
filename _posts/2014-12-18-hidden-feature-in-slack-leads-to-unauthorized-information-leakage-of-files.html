@@ -1,0 +1,61 @@
+---
+layout: post
+title: Hidden Feature in Slack leads to Unauthorized Information Leakage of Files
+date: 2014-12-18 13:05:24.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Security
+tags:
+- bug bounty
+- bugbounty
+- Slack
+meta:
+  _oembed_009e1eb3c5e9d185f1270577925e73fa: "{{unknown}}"
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  geo_public: '0'
+  _oembed_b40e0db9965c8831c32f881b6ff7128c: "{{unknown}}"
+  _oembed_c4ce13374516773d05f90c1731478083: "{{unknown}}"
+  _oembed_bb432b18f525ebfe5fa6d06050eb7a9c: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>Before I get started, following is a legend:</p>
+<ul>
+<li><strong>Victim - V</strong></li>
+<li><strong>Attacker - A</strong></li>
+<li><strong>public URL - PU</strong></li>
+<li><strong>Shared URL - SU</strong></li>
+</ul>
+<p>Now, let's get to the issue.</p>
+<p>There is a hidden feature in Slack that is not directly accessible from the UI. It is not documented either. But, it is a pretty simple call to an API endpoint that can be made via a proxy tool such as Burp. This API call is basically used to "unshare a file shared with a Slack user". An important point to note here is that this vulnerability is regarding sharing a file with a different user and NOT within a channel. The sharing-unsharing aspect of files within a channel is a legitimate feature in the UI. It is also mentioned in the tweet from Slack <a href="https://twitter.com/SlackHQ/status/524512369423441920" target="_blank">here</a>. But, this vulnerability is not about that. It is about sharing-unsharing files with *<em><strong>users</strong></em>* directly and not within channels.</p>
+<p>So, due to this hidden feature, it is possible to share a file from V to A and then unshare it again from V to A (assuming V changes mind and does not want to share the file anymore with A) rendering the file inaccessible to A via a SU.</p>
+<p>It was observed that it is possible to get past this control by accessing the now unshared file via a different URL - PU. Please see the video PoC or the Reproduction steps on how A can find PU and store it before V decides to unshare the file with A.</p>
+<p>So, now after the file is unshared with A, A accesses PU (stored earlier) and the file now becomes public to everyone in the team without V's knowledge. You can think of it as an Insecure Direct Object Reference vulnerability. This is the first problem.</p>
+<p>Then, assuming V happens to navigate to that file again,  V suddenly notices that the unshared file now has been made public via the PU without V's knowledge or consent. But, V does not freak out because V can still revoke the PU and it won't be accessible by A or anybody else anymore. This revoking feature is provided in the UI as well. This is true. The PU indeed gets revoked and becomes inaccessible and it appears that this file could not be accessed/viewed by A or any other team member by any other means.</p>
+<p>But, the problem does not end just yet. On A's Slack homepage, on the right hand pane, A notices that this file is still visible. A clicks on the file, refreshes the UI and can still view the contents of this file with whatever changes V has made or makes in the future. This is the second problem.</p>
+<p>So, this is clearly a security vulnerability where an attacker can view a file despite of it being unshared repeatedly.</p>
+<p>I also sent them a video PoC demonstrating this in action. If you are interested, you can view it <a href="https://www.youtube.com/watch?v=-l0aNVdbyas" target="_blank">here</a>. The video is a bit long (~9 mins) and the volume is a little bit low so you would need some kind of headphones to listen to my irritating voice :-)</p>
+<p>The report along with the comments on HackerOne is available <a href="https://docs.google.com/document/d/1q-aKtxS6xNIhal0As743tBE1hKMtrj9akcol8_FPfRM/edit?usp=sharing" target="_blank">here</a>.</p>
+<p>&nbsp;</p>
+<p><strong>Conclusion</strong></p>
+<p>I am disappointed with how Slack dismissed my original report without even bothering to read the report properly and making any sense out of it or ask me questions if they didn't understand anything. I totally understand and respect their decision that this falls outside the scope of their Bug Bounty program but I wasn't asking to be rewarded in the first place. I was simply reporting a security vulnerability. The scope and whether to reward a certain bug or not is completely on them and I understand that as a researcher, I need to respect that. Oh btw, they have not mentioned anything about "Undocumented APIs" in their scope so how would a researcher know what is in scope and what is out of scope? All I can see in their guidelines is "Our security team will assess each bug to determine if it qualifies." But, they failed to assess the bug properly in the first place.</p>
+<p>Anyways, some takeaways for both programs and researchers from this are:</p>
+<ul>
+<li>Read the bug report once. If its confusing or doesn't make sense, read it again. Ask the researcher if its still not clear. Make an effort to watch/read the PoC provided. Don't just assume things.</li>
+<li>Document features/functions/API calls if you allow them. Not documenting something and yet silently allowing them can be an issue as is evident from this case. They are relying on the fact that this feature is not being used by Slack users. This is naive IMHO.</li>
+<li>Revise your scope to make it fine grained and much clearer. Scoping is a constant learning/revision process.</li>
+<li>Don't ignore the underlying problem which, in this case, I *<strong><em>believe*</em></strong> is the fact that the "permalink_public" URL is generated without the need of it. For instance, why would they want to generate this URL even before a file is revoked? And, even if they are generating it before its revoked, why send it to the client? It is like opening a can of worms. I don't think its necessary to do that but they failed to even acknowledge that fact or reason as to why they are doing that.</li>
+<li>Researchers need to submit quality reports and should not be discouraged by dismissing responses. We need to change the general thought most Bug Bounty Programs have these days - that all researchers want is a bounty for a crappy report.</li>
+</ul>
+<p>That's it folks.</p>
+<p>&nbsp;</p>
+<p>Cheers!</p>

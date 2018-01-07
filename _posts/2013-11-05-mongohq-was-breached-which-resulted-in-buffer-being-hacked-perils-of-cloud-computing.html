@@ -1,0 +1,89 @@
+---
+layout: post
+title: MongoHQ was breached which resulted in Buffer being hacked ----> Perils of
+  Cloud Computing
+date: 2013-11-05 11:32:11.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- Adobe
+- Buffer
+- Cloud Computing
+- Cloud Security
+- MongoHQ
+- OAuth
+- Security
+meta:
+  _edit_last: '28002546'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/
+  publicize_linkedin_url: ''
+  _wpas_done_1005089: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"BZck7JB4OP";b:1;}}
+  _oembed_f737ccf6c3c22fc5669fb1f472262d63: "{{unknown}}"
+  _oembed_7332dc8147c71bc3485382c2cbc7b612: "{{unknown}}"
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p><strong>Disclaimer:</strong></p>
+<p>This post does not contain any new information. I have just read Buffer's Blog and the blog at [1] and tried to put my thoughts down or rather tried to present in such a way that it would make sense to me. If you are looking for the original post, please refer to [1].</p>
+<p>&nbsp;</p>
+<p><b>TL;DR version:</b></p>
+<p>MongoHQ is breached -&gt; Unencrypted OAuth Tokens stored in Buffer’s DB hosted on MongoHQ is stolen -&gt; Spam Posts on Buffer users’ Twitter/Facebook account</p>
+<p>The attackers were also able to steal Buffer’s source code from GitHub. This had unencrypted secret tokens hardcoded which made the Twitter spam posts possible (Details below).</p>
+<p>Yes, they had their source on GitHub -&gt; FAIL. Buffer <b><i>suspects</i></b> that the attackers were able to get access to their GitHub account by using the passwords leaked from Adobe’s breach for one of their employees -&gt; Epic FAIL?</p>
+<p>&nbsp;</p>
+<p><b>Full Version:</b></p>
+<p>On October 26, 2013, Buffer was hacked.</p>
+<p>Attackers stole OAuth tokens stored in Buffer’s database and posted spam posts on Buffer users’ Facebook and Twitter accounts.</p>
+<p>This database was hosted on MongoHQ which made it all possible since MongoHQ was breached earlier.</p>
+<p>Both Facebook (v 2.0) and Twitter (v1.0a) use OAuth to authorize 3<sup>rd</sup> party websites to post on user’s behalf once the user has granted access to the 3<sup>rd</sup> party website.</p>
+<p>Buffer did some serious security mistakes on their part which made it possible:</p>
+<ul>
+<li>Stored OAuth tokens unencrypted.</li>
+<li>Did not use the <b><i>optional </i></b>feature of using app_secret for implementing Facebook integration. This app_secret is a token that works like an authentication token between Facebook and the developer (Buffer). So, in order to post something, the attacker would need both the OAuth tokens and this app_secret. Buffer developers did not utilize this setting. Only, the OAuth tokens were required to post.</li>
+<li>Twitter by default makes it mandatory to use the above mentioned app_secret. So, the attackers had to use it in order to tweet on user’s behalf. So, how did the attackers gain access to it you ask? <b><i>Buffer stored this unencrypted in their source code hosted on GitHub.</i></b></li>
+</ul>
+<p>&nbsp;</p>
+<p><b>Buffer’s Response:</b></p>
+<p>What Buffer basically said can be found here - <a href="http://open.bufferapp.com/buffer-has-been-hacked-here-is-whats-going-on/">http://open.bufferapp.com/buffer-has-been-hacked-here-is-whats-going-on/</a></p>
+<ul>
+<li>They revoked all pre-existing Twitter tokens.</li>
+<li>OAuth tokens are now encrypted.</li>
+</ul>
+<p>They never mentioned the following:</p>
+<ul>
+<li>Is it HSM based?</li>
+<li>Are layers of infrastructure partitioned? All encryption-related remedies are completely isolated from Buffer’s MongoHQ?</li>
+</ul>
+<p>&nbsp;</p>
+<p>To this, NopSec CTO Michelangelo Sidagni said – “A one-time control fix is not usually enough to cover an entire security program. Instead of detailing just that aspect, [Buffer] should have talked about their renewed and revamped approach on their overall security program. Making a statement that this is going to fix all their problems without covering their entire security posture is just an invitation for the attacker to strike again….just for the sake of it.”  -&gt; <b><i>RIGHT!!</i></b></p>
+<p>&nbsp;</p>
+<p><b>Recommended Way of implementing OAuth tokens:</b></p>
+<ul>
+<li>Using Hardware Security Module (HSM). Developers are not going to do this. Too much work??</li>
+<li>If the servers are hosted on a third party cloud, they can’t add HSM Module anywhere (It’s all in the cloud somewhere DUH). So, this introduces a Catch 22 situation. To address this, Amazon launched AWS CloudHSM. But, from what I have read, this is not feasible as its too expensive.</li>
+<li>One approach to mitigate but not completely eradicate would be to <b><i>store keys in files that are not accessible through the Web</i></b>.</li>
+<li>Encrypt at rest on Buffer’s servers, before it gets sent to MongoHQ.</li>
+<li>Buffer has enabled 2 factor authN for their team now which is good and adds an additional layer. But, why wasn’t this done earlier??</li>
+</ul>
+<p>&nbsp;</p>
+<p><b>Observations:</b></p>
+<ul>
+<li>Be cautious when authorizing 3<sup>rd</sup> party websites/apps to log us in by using our Facebook/Twitter credentials. We don’t know how they have implemented their OAuth.</li>
+<li>Cloud Computing risks as mentioned earlier. You can never trust your data with a third party cloud. You need to do your due diligence.</li>
+<li>OAuth faulty implementation. There seems to be a lot of different OAuth implementations out there. Some secure, some not. So, can we trust them?</li>
+<li>API Security issues.</li>
+<li>It is incredible to see how one breach in one company can cause multiple breaches.</li>
+</ul>
+<p>&nbsp;</p>
+<p>Reference:</p>
+<p>[1] <a href="http://blog.programmableweb.com/2013/11/04/why-the-attack-on-buffer-was-a-serious-wake-up-call-for-the-web/">http://blog.programmableweb.com/2013/11/04/why-the-attack-on-buffer-was-a-serious-wake-up-call-for-the-web/</a></p>

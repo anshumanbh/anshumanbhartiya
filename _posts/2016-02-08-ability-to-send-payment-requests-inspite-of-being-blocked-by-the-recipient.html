@@ -1,0 +1,39 @@
+---
+layout: post
+title: Ability to send payment requests inspite of being blocked by the recipient
+date: 2016-02-08 00:13:32.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Security
+tags: []
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '19585613637'
+author:
+  login: abhartiya
+  email: anshuman.bhartiya@gmail.com
+  display_name: abhartiya
+  first_name: ''
+  last_name: ''
+---
+<p>TL;DR - I, as an attacker could send payment requests to anyone on Facebook even if:</p>
+<ul>
+<li>I am not a friend of the victim recipient</li>
+<li>The victim recipient has explicitly blocked me from sending any messages in Facebook Messenger</li>
+</ul>
+<p>And, if you are interested in the details, here goes..</p>
+<p>Payment requests are normally sent as messages from the Messenger (and can only be sent to a friend) but if you are blocked from sending messages by somebody (whether a friend or not a friend), you can't technically send payment requests or any messages for that matter from the Facebook Messenger UI.</p>
+<p>I observed that this wasn't completely true. If you could capture a request to send payment requests (to lets say a legit friend who hasn't blocked you from sending messages), it was possible to just replay that same request using a proxy tool such as Burp (and changing the recipient ID to the victim's ID or for that matter anyone on Facebook) and it would be sent successfully. Another problem with this was that the victim would receive an email saying that "Attacker has sent you a payment request". So, this was also abusing the Facebook platform to spam anyone on Facebook and/or carry a spear phishing campaign.</p>
+<p>The request looked like below:</p>
+<blockquote><p>POST /p2p/payment_requests/_create/ HTTP/1.1<br />
+Host: <a href="http://www.facebook.com/" rel="nofollow">www.facebook.com</a><br />
+Cookie: c_user=&lt;redacted&gt;; xs=&lt;redacted&gt;;<br />
+Connection: close</p>
+<p>amount=&lt;amount_requested&gt;&amp;offline_threading_id=&lt;redacted&gt;&amp;requestee_id=&lt;profile_id_who_to_send_to&gt;&amp;__a=1&amp;fb_dtsg=&lt;csrf_token&gt;</p></blockquote>
+<p>Facebook rewarded $1500 for this bug.</p>
+<p>&nbsp;</p>
