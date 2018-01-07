@@ -14,17 +14,11 @@
 - name: Bugbounty
   href: /bugbounty/
 
-- name: Database
-  href: /database/
+- name: Containers
+  href: /containers/
 
-- name: Configuration
-  href: /configuration/
-
-- name: Installation
-  href: /installation/
-
-- name: Monitoring
-  href: /monitoring/
+- name: Miscellaneous
+  href: /miscellaneous/
 
 - name: Personal
   href: /personal/
