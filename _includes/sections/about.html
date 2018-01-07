@@ -41,6 +41,12 @@
                     {% if site.author.cv %}
                     <li><a href="{{ site.author.cv }}" target="blank"><i class="fa fa-file-pdf-o"></i></a></li>
                     {% endif %}
+                    {% if site.author.hackerone_username %}
+                    <li><a href="https://hackerone.com/{{ site.author.hackerone_username }}" target="blank"><img src="http://image.ibb.co/mPUVrb/hackerone.jpg"></i></a></li>
+                    {% endif %}
+                    {% if site.author.bugcrowd_username %}
+                    <li><a href="https://bugcrowd.com/{{ site.author.bugcrowd_username }}" target="blank"><img src="http://image.ibb.co/cuLmWb/b_hex.png"></i></a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>

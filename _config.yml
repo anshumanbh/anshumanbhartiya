@@ -22,6 +22,8 @@ author:  # change following line to your infomation.
   email: anshuman.bhartiya@gmail.com  # Leave blank if you don't have now
   cv: #http://cv.jarrekk.com  # An online CV can be printed as PDF, leave blank if you don't have now
   # skill icons are on avatar's left and right side. Reference urls are http://fontawesome.io/ and http://fizzed.com/oss/font-mfizz
+  hackerone_username: anshuman_bh
+  bugcrowd_username: anshuman_bh
   skill_icon1:
     - name: icon-docker
     - name: icon-aws
