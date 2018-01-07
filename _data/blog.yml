@@ -8,7 +8,7 @@
 - name: Database
   href: /database/
 
-- name: DevOps
+- name: Devops
   href: /devops/
 
 - name: Configuration
@@ -20,5 +20,8 @@
 - name: Monitoring
   href: /monitoring/
 
-- name: Bug Bounty
+- name: Bugbounty
   href: /bugbounty/
+
+- name: Personal
+  href: /personal/
