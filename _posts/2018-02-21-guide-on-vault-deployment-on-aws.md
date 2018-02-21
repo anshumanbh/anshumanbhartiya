@@ -117,7 +117,6 @@ export GITHUB_OAUTH_TOKEN=<redacted>
 Builds finished. The artifacts of successful builds are:
 amazon-linux-ami: AMIs were created:
 us-west-2: <redacted>
-
 ubuntu16-ami: AMIs were created:
 us-west-2: <redacted>
 ```
