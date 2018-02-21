@@ -114,11 +114,11 @@ export GITHUB_OAUTH_TOKEN=<redacted>
 * Build the AMI by typing `packer build vault-consul.json`. The `VPC_ID`, `SUBNET_ID` and `SECURITY_GROUP_ID` environment variables exported as environment variables earlier would come in handy where after starting the instances, packer would use those values to SSH from your local system onto those instances to do the installation of Vault and Consul and build the AMI(s).
 * When the build finishes, you should see something like:
 ```
-==> Builds finished. The artifacts of successful builds are:
---> amazon-linux-ami: AMIs were created:
+Builds finished. The artifacts of successful builds are:
+amazon-linux-ami: AMIs were created:
 us-west-2: <redacted>
 
---> ubuntu16-ami: AMIs were created:
+ubuntu16-ami: AMIs were created:
 us-west-2: <redacted>
 ```
 
