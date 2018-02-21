@@ -159,9 +159,7 @@ terraform apply
 * After everything finishes, the output should look like below:
 ```
 Apply complete! Resources: 29 added, 0 changed, 0 destroyed.
-
 Outputs:
-
 asg_name_consul_cluster = <redacted>
 asg_name_vault_cluster = <redacted>
 aws_region = <redacted>
@@ -196,7 +194,6 @@ Host vault-server-1
     User <user>
     Port 22
     ProxyCommand ssh -q -W %h:%p aws-bastion
-
 Host consul-server-1
     HostName <>
     User <user>
