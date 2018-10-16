@@ -31,6 +31,12 @@
   page: blog/
   css: testimonials navy-section
 
+- id: speaking
+  i18n: nav.speaking
+  name: Speaking
+  tpl: speaking.html
+  css: timeline
+
 - id: donation
   i18n: nav.donation
   name: Donation

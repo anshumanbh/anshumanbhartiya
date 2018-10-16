@@ -1,6 +1,20 @@
 # careers section data
 # if you don't have language feature(language.yml is empty), ignore "i18n" items
 - name:
+    detail: Nuna
+    i18n: company_f
+  desc:
+    detail: AppSec, InfraSec, DevSecOps, Automation
+    i18n: company_f_desc
+  date:
+    detail: April 2018
+    i18n: company_f_date
+  job:
+    detail: Staff Security Engineer
+    i18n: company_f_job
+  icon: fa-plus-square
+
+- name:
     detail: Intuit
     i18n: company_e
   desc:
