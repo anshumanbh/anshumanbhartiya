@@ -4,84 +4,84 @@
 - name:
     detail: Rootcon 12
     i18n: speaking_f
-  link:
-    detail: https://bit.ly/2OrNPxT
-    i18n: speaking_f_link
-  date:
-    detail: 2018-09-27
-    i18n: speaking_f_date
   title:
     detail: Bug Bounty Hunting on Steroids
     i18n: speaking_f_title
+  date:
+    detail: 2018-09-27
+    i18n: speaking_f_date
+  link:
+    detail: https://bit.ly/2OrNPxT
+    i18n: speaking_f_link
   icon: fa-plus-square
 
 - name:
     detail: ToorCon 20
     i18n: speaking_e
-  link:
-    detail: https://bit.ly/2ClKeun
-    i18n: speaking_e_link
-  date:
-    detail: 2018-09-16
-    i18n: speaking_e_date
   title:
     detail: Bug Bounty Hunting on Steroids
     i18n: speaking_e_title
+  date:
+    detail: 2018-09-16
+    i18n: speaking_e_date
+  link:
+    detail: https://bit.ly/2ClKeun
+    i18n: speaking_e_link
   icon: fa-plus-square
 
 - name:
     detail: Recon Village
     i18n: speaking_d
-  link:
-    detail: https://bit.ly/2J0y0Z4
-    i18n: speaking_d_link
-  date:
-    detail: 2018-08-12
-    i18n: speaking_d_date
   title:
     detail: Bug Bounty Hunting on Steroids
     i18n: speaking_d_title
+  date:
+    detail: 2018-08-12
+    i18n: speaking_d_date
+  link:
+    detail: https://bit.ly/2J0y0Z4
+    i18n: speaking_d_link
   icon: fa-plus-square
 
 - name:
     detail: Blackhat Arsenal
     i18n: speaking_c
-  link:
-    detail: https://ubm.io/2NLAX0q
-    i18n: speaking_c_link
-  date:
-    detail: 2017-07-22
-    i18n: speaking_c_date
   title:
     detail: Kubebot - Scaleable and automated testing slackbot
     i18n: speaking_c_title
+  date:
+    detail: 2017-07-22
+    i18n: speaking_c_date
+  link:
+    detail: https://ubm.io/2NLAX0q
+    i18n: speaking_c_link
   icon: fa-plus-square
 
 - name:
     detail: Defcon Workshop
     i18n: speaking_b
-  link:
-    detail: https://bit.ly/2tKrYHP
-    i18n: speaking_b_link
-  date:
-    detail: 2017-07-29
-    i18n: speaking_b_date
   title:
     detail: Harnessing the Power of Docker and Kubernetes to Supercharge Your Hacking Tactics
     i18n: speaking_b_title
+  date:
+    detail: 2017-07-29
+    i18n: speaking_b_date
+  link:
+    detail: https://bit.ly/2tKrYHP
+    i18n: speaking_b_link
   icon: fa-plus-square
 
 - name:
     detail: OWASP Boston BASC
     i18n: speaking_a
-  link:
-    detail: https://bit.ly/2AcecPZ
-    i18n: speaking_a_link
-  date:
-    detail: 2014
-    i18n: speaking_a_date
   title:
     detail: Open Source Vulnerability Response
     i18n: speaking_a_title
+  date:
+    detail: 2014
+    i18n: speaking_a_date
+  link:
+    detail: https://bit.ly/2AcecPZ
+    i18n: speaking_a_link
   icon: fa-plus-square
 
